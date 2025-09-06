@@ -1,0 +1,49 @@
+body, .navbar {
+    font-family: 'Amazon Ember', Arial, sans-serif;
+}
+
+.navbar {
+    background-color: #131921;
+    color: white;
+}
+
+.small-text {
+    font-size: 12px;
+    color: #ccc;
+}
+.bold-text {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.search-bar select {
+    border: none;
+    background-color: #f3f3f3;
+}
+.search-bar input {
+    border: none;
+}
+.search-bar button {
+    background-color: #febd69;
+    border: none;
+}
+
+.nav-location,
+.nav-account,
+.nav-orders,
+.nav-cart,
+.nav-lang {
+    border: 1px solid transparent;
+    border-radius: 3px;
+    padding: 2px 4px;
+    transition: border-color 0.2s ease;
+}
+
+.nav-location:hover,
+.nav-account:hover,
+.nav-orders:hover,
+.nav-cart:hover,
+.nav-lang:hover {
+    border-color: white;
+    cursor: pointer;
+}
