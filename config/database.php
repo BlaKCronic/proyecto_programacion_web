@@ -8,4 +8,4 @@ class DataBase{
         $this -> _BD = new PDO($this -> _DNS, $this -> _USER, $this -> _PASSWORD);
     }
 }
-?
+?>
