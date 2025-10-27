@@ -6,7 +6,6 @@ require_once "models/categoria.php";
 $appProducto = new Producto();
 $appCategoria = new Categoria();
 
-// Obtener productos destacados y nuevos
 $productos_destacados = $appProducto->readDestacados(8);
 $productos_nuevos = $appProducto->readNuevos(8);
 $categorias = $appCategoria->read();
@@ -15,7 +14,6 @@ $pageTitle = 'Amazon Lite - Tu tienda en línea';
 include_once "views/header.php";
 ?>
 
-<!-- Carousel de Banners -->
 <div id="carouselPrincipal" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-indicators">
         <button type="button" data-bs-target="#carouselPrincipal" data-bs-slide-to="0" class="active"></button>
@@ -84,7 +82,6 @@ include_once "views/header.php";
     </button>
 </div>
 
-<!-- Categorías Principales -->
 <section class="py-5 bg-light">
     <div class="container">
         <h2 class="mb-4">Comprar por categoría</h2>
@@ -111,7 +108,6 @@ include_once "views/header.php";
     </div>
 </section>
 
-<!-- Ofertas del Día -->
 <?php if(!empty($productos_destacados)): ?>
 <section class="py-5">
     <div class="container">
@@ -181,7 +177,6 @@ include_once "views/header.php";
 </section>
 <?php endif; ?>
 
-<!-- Banner Intermedio -->
 <section class="py-5 bg-warning">
     <div class="container">
         <div class="row align-items-center">
@@ -198,7 +193,6 @@ include_once "views/header.php";
     </div>
 </section>
 
-<!-- Nuevos Lanzamientos -->
 <?php if(!empty($productos_nuevos)): ?>
 <section class="py-5">
     <div class="container">
@@ -266,7 +260,6 @@ include_once "views/header.php";
 </section>
 <?php endif; ?>
 
-<!-- Beneficios -->
 <section class="py-5 bg-light">
     <div class="container">
         <div class="row g-4">

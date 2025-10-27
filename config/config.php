@@ -1,31 +1,25 @@
 <?php
-// Configuración de la aplicación
 define('DB_HOST', 'mariadb');
 define('DB_NAME', 'database');
 define('DB_USER', 'user');
 define('DB_PASS', 'password');
 
-// Rutas
 define('BASE_URL', 'http://localhost');
 define('IMG_PATH', __DIR__ . '/../img/');
 define('IMG_URL', BASE_URL . '/img/');
 
-// Configuración de la aplicación
 define('APP_NAME', 'Amazon Lite');
 define('ITEMS_PER_PAGE', 12);
-define('COMISION_PLATAFORMA', 0.15); // 15%
+define('COMISION_PLATAFORMA', 0.15);
 
-// Configuración de envío e impuestos
 define('COSTO_ENVIO_BASE', 99.00);
 define('ENVIO_GRATIS_DESDE', 500.00);
-define('IVA', 0.16); // 16%
+define('IVA', 0.16);
 
-// Sesión
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Funciones auxiliares globales
 function estaLogueado() {
     return isset($_SESSION['usuario_id']);
 }

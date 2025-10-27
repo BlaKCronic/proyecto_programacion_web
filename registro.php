@@ -6,12 +6,10 @@ $app = new Usuario();
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Si ya está logueado, redirigir
 if(estaLogueado()) {
     redirect('index.php');
 }
 
-// Procesar registro
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
     $data = [];
     $data['nombre'] = $app->sanitizar($_POST['nombre']);
@@ -21,7 +19,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
     $password = $_POST['password'];
     $password_confirm = $_POST['password_confirm'];
     
-    // Validaciones
     if(empty($data['nombre']) || empty($data['apellido']) || empty($data['email']) || 
        empty($password) || empty($password_confirm)) {
         $mensaje = 'Por favor complete todos los campos obligatorios';
@@ -39,7 +36,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
         $mensaje = 'Este email ya está registrado';
         $tipo_mensaje = 'danger';
     } else {
-        // Datos opcionales
         $data['direccion'] = isset($_POST['direccion']) ? $app->sanitizar($_POST['direccion']) : '';
         $data['ciudad'] = isset($_POST['ciudad']) ? $app->sanitizar($_POST['ciudad']) : '';
         $data['estado'] = isset($_POST['estado']) ? $app->sanitizar($_POST['estado']) : '';
@@ -52,10 +48,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
             $mensaje = '¡Registro exitoso! Ahora puedes iniciar sesión';
             $tipo_mensaje = 'success';
             
-            // Limpiar formulario
             $_POST = array();
             
-            // Redirigir después de 2 segundos
             header("refresh:2;url=login.php");
         } else {
             $mensaje = 'Error al registrar. Intenta nuevamente';
@@ -266,7 +260,6 @@ document.getElementById('mostrar_direccion').addEventListener('change', function
     }
 });
 
-// Validar que las contraseñas coincidan
 document.querySelector('form').addEventListener('submit', function(e) {
     const password = document.getElementById('password').value;
     const password_confirm = document.getElementById('password_confirm').value;
@@ -278,12 +271,10 @@ document.querySelector('form').addEventListener('submit', function(e) {
     }
 });
 
-// Validar teléfono (solo números)
 document.getElementById('telefono').addEventListener('input', function(e) {
     this.value = this.value.replace(/[^0-9]/g, '');
 });
 
-// Validar código postal (solo números)
 document.getElementById('codigo_postal').addEventListener('input', function(e) {
     this.value = this.value.replace(/[^0-9]/g, '');
 });

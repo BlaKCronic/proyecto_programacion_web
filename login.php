@@ -6,12 +6,10 @@ $app = new Usuario();
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Si ya está logueado, redirigir
 if(estaLogueado()) {
     redirect('index.php');
 }
 
-// Procesar login
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
     $email = $app->sanitizar($_POST['email']);
     $password = $_POST['password'];
@@ -26,18 +24,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
         $usuario = $app->login($email, $password);
         
         if($usuario) {
-            // Guardar datos en sesión
             $_SESSION['usuario_id'] = $usuario['id_usuario'];
             $_SESSION['usuario_nombre'] = $usuario['nombre'];
             $_SESSION['usuario_apellido'] = $usuario['apellido'];
             $_SESSION['usuario_email'] = $usuario['email'];
             
-            // Contar items del carrito
             require_once "models/carrito.php";
             $carrito = new Carrito();
             $_SESSION['cart_count'] = $carrito->contarItems($usuario['id_usuario']);
             
-            // Redirigir
             redirect('index.php');
         } else {
             $mensaje = 'Email o contraseña incorrectos';
