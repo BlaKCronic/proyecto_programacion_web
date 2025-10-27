@@ -67,7 +67,7 @@ class Categoria extends Sistema {
         return null;
     }
 
-    function cargarImagen($carpeta) {
+    function cargarImagen($campo, $carpeta) {
         if(isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
             $allowed = ['jpg', 'jpeg', 'png', 'gif'];
             $filename = $_FILES['imagen']['name'];

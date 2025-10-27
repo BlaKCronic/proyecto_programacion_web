@@ -189,7 +189,7 @@ class Producto extends Sistema {
         return null;
     }
 
-    function cargarImagen($carpeta) {
+    function cargarImagen($campo, $carpeta) {
         if(isset($_FILES['imagen_principal']) && $_FILES['imagen_principal']['error'] == 0) {
             $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $filename = $_FILES['imagen_principal']['name'];
