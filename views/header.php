@@ -7,7 +7,6 @@ $isLoggedIn = isset($_SESSION['usuario_id']);
 $userName = $isLoggedIn ? $_SESSION['usuario_nombre'] : 'Invitado';
 $cartCount = $isLoggedIn ? ($_SESSION['cart_count'] ?? 0) : 0;
 
-// Obtener categorías para el menú
 if(!isset($categorias)) {
     require_once __DIR__ . "/../models/categoria.php";
     $catApp = new Categoria();
@@ -27,16 +26,13 @@ if(!isset($categorias)) {
 </head>
 <body>
     <header class="header-main">
-        <!-- Barra superior -->
         <nav class="navbar navbar-dark bg-amazon-dark px-3 py-2">
             <div class="container-fluid">
                 <div class="d-flex align-items-center w-100">
-                    <!-- Logo -->
                     <a href="index.php" class="logo me-3">
                         <img src="img/logo/logo.png" width="100" alt="Amazon Lite">
                     </a>
                     
-                    <!-- Ubicación -->
                     <div class="nav-location text-white me-3 hover-border d-none d-md-flex">
                         <i class="bi bi-geo-alt"></i>
                         <div class="d-inline-block ms-1">
@@ -45,7 +41,6 @@ if(!isset($categorias)) {
                         </div>
                     </div>
                     
-                    <!-- Barra de búsqueda -->
                     <form action="busqueda.php" method="GET" class="search-bar d-flex flex-grow-1 me-3">
                         <select name="categoria" class="form-select search-select d-none d-md-block">
                             <option value="">Todos</option>
@@ -63,14 +58,12 @@ if(!isset($categorias)) {
                         </button>
                     </form>
                     
-                    <!-- Idioma -->
                     <div class="nav-lang d-none d-md-flex align-items-center text-white me-3 hover-border">
                         <img src="img/icons/mx-flag.png" width="20" alt="MX" class="me-1" 
                              onerror="this.style.display='none'">
                         <span class="bold-text">ES</span>
                     </div>
                     
-                    <!-- Cuenta -->
                     <div class="nav-account text-white me-3 hover-border" 
                          onclick="location.href='<?= $isLoggedIn ? 'perfil.php' : 'login.php' ?>'">
                         <span class="small-text d-block">Hola, <?= htmlspecialchars($userName) ?></span>
@@ -79,14 +72,12 @@ if(!isset($categorias)) {
                         </span>
                     </div>
                     
-                    <!-- Pedidos -->
                     <div class="nav-orders text-white me-3 hover-border d-none d-lg-block" 
                          onclick="location.href='pedidos.php'">
                         <span class="small-text d-block">Devoluciones</span>
                         <span class="bold-text">y Pedidos</span>
                     </div>
                     
-                    <!-- Carrito -->
                     <div class="nav-cart d-flex align-items-center text-white hover-border position-relative" 
                          onclick="location.href='carrito.php'">
                         <i class="bi bi-cart3 fs-4"></i>
@@ -99,7 +90,6 @@ if(!isset($categorias)) {
             </div>
         </nav>
         
-        <!-- Barra de navegación -->
         <nav class="navbar navbar-dark bg-amazon-light px-3 py-2">
             <div class="container-fluid">
                 <div class="d-flex align-items-center w-100 flex-wrap">
@@ -127,7 +117,6 @@ if(!isset($categorias)) {
         </nav>
     </header>
 
-    <!-- Menú lateral de categorías -->
     <div class="offcanvas offcanvas-start" tabindex="-1" id="menuCategorias">
         <div class="offcanvas-header bg-amazon-dark text-white">
             <h5 class="offcanvas-title">
