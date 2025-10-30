@@ -1,11 +1,11 @@
 <?php
-if(!isset($_SESSION)) {
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$isLoggedIn = isset($_SESSION['usuario_id']);
-$userName = $isLoggedIn ? $_SESSION['usuario_nombre'] : 'Invitado';
-$cartCount = $isLoggedIn ? ($_SESSION['cart_count'] ?? 0) : 0;
+$isLoggedIn = !empty($_SESSION['usuario_id']);
+$userName = $isLoggedIn ? (string) ($_SESSION['usuario_nombre'] ?? 'Usuario') : 'Invitado';
+$cartCount = $isLoggedIn ? (int) ($_SESSION['cart_count'] ?? 0) : 0;
 
 if(!isset($categorias)) {
     require_once __DIR__ . "/../models/categoria.php";
