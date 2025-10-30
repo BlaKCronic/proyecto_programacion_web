@@ -1,75 +1,173 @@
 <?php
-class Sistema {
-    var $_DNS = "mysql:host=mariadb;dbname=database";
-    var $_USER = "user";
-    var $_PASSWORD = "password";
-    var $_BD = null;
+require_once "sistema.php";
+
+class Resena extends Sistema {
     
-    function conect() {
-        try {
-            $this->_BD = new PDO($this->_DNS, $this->_USER, $this->_PASSWORD);
-            $this->_BD->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->_BD->exec("SET NAMES utf8");
-        } catch(PDOException $e) {
-            die("Error de conexión: " . $e->getMessage());
-        }
+    function create($data) {
+        $this->conect();
+        $sql = "INSERT INTO resenas (id_producto, id_usuario, calificacion, titulo, comentario) 
+                VALUES (:id_producto, :id_usuario, :calificacion, :titulo, :comentario)";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_producto", $data['id_producto'], PDO::PARAM_INT);
+        $sth->bindParam(":id_usuario", $data['id_usuario'], PDO::PARAM_INT);
+        $sth->bindParam(":calificacion", $data['calificacion'], PDO::PARAM_INT);
+        $sth->bindParam(":titulo", $data['titulo'], PDO::PARAM_STR);
+        $sth->bindParam(":comentario", $data['comentario'], PDO::PARAM_STR);
+        $sth->execute();
+        return $sth->rowCount();
     }
 
-    function cargarImagen($campo, $carpeta) {
-        if(isset($_FILES[$campo]) && $_FILES[$campo]['error'] == 0) {
-            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            $filename = $_FILES[$campo]['name'];
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            
-            if(in_array($ext, $allowed)) {
-                $newname = uniqid() . '.' . $ext;
-                $ruta = __DIR__ . '/../img/' . $carpeta . '/';
-                
-                if(!is_dir($ruta)) {
-                    mkdir($ruta, 0777, true);
-                }
-                
-                if(move_uploaded_file($_FILES[$campo]['tmp_name'], $ruta . $newname)) {
-                    return $newname;
-                }
-            }
+    function readByProducto($id_producto) {
+        $this->conect();
+        $sql = "SELECT r.*, u.nombre, u.apellido
+                FROM resenas r
+                INNER JOIN usuarios u ON r.id_usuario = u.id_usuario
+                WHERE r.id_producto = :id_producto
+                ORDER BY r.fecha_resena DESC";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_producto", $id_producto, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    function readByUsuario($id_usuario) {
+        $this->conect();
+        $sql = "SELECT r.*, p.nombre as producto, p.imagen_principal
+                FROM resenas r
+                INNER JOIN productos p ON r.id_producto = p.id_producto
+                WHERE r.id_usuario = :id_usuario
+                ORDER BY r.fecha_resena DESC";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_usuario", $id_usuario, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    function obtenerPromedioCalificacion($id_producto) {
+        $this->conect();
+        $sql = "SELECT AVG(calificacion) as promedio, COUNT(*) as total
+                FROM resenas
+                WHERE id_producto = :id_producto";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_producto", $id_producto, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->fetch(PDO::FETCH_ASSOC);
+    }
+
+    function usuarioPuedeResenar($id_usuario, $id_producto) {
+        $this->conect();
+        
+        $sql = "SELECT COUNT(*) as compro
+                FROM pedidos p
+                INNER JOIN detalle_pedidos dp ON p.id_pedido = dp.id_pedido
+                WHERE p.id_usuario = :id_usuario 
+                AND dp.id_producto = :id_producto
+                AND p.estado = 'entregado'";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_usuario", $id_usuario, PDO::PARAM_INT);
+        $sth->bindParam(":id_producto", $id_producto, PDO::PARAM_INT);
+        $sth->execute();
+        $compro = $sth->fetch(PDO::FETCH_ASSOC);
+        
+        if($compro['compro'] == 0) {
+            return false;
+        }
+        
+        $sql = "SELECT COUNT(*) as ya_reseno
+                FROM resenas
+                WHERE id_usuario = :id_usuario AND id_producto = :id_producto";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_usuario", $id_usuario, PDO::PARAM_INT);
+        $sth->bindParam(":id_producto", $id_producto, PDO::PARAM_INT);
+        $sth->execute();
+        $ya_reseno = $sth->fetch(PDO::FETCH_ASSOC);
+        
+        return $ya_reseno['ya_reseno'] == 0;
+    }
+
+    function marcarVerificado($id) {
+        $this->conect();
+        $sql = "UPDATE resenas SET verificado = 1 WHERE id_resena = :id_resena";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_resena", $id, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->rowCount();
+    }
+
+    function delete($id) {
+        if(is_numeric($id)) {
+            $this->conect();
+            $sql = "DELETE FROM resenas WHERE id_resena = :id_resena";
+            $sth = $this->_BD->prepare($sql);
+            $sth->bindParam(":id_resena", $id, PDO::PARAM_INT);
+            $sth->execute();
+            return $sth->rowCount();
         }
         return null;
     }
 
-    function eliminarImagen($carpeta, $nombre_archivo) {
-        if($nombre_archivo && file_exists(__DIR__ . '/../img/' . $carpeta . '/' . $nombre_archivo)) {
-            unlink(__DIR__ . '/../img/' . $carpeta . '/' . $nombre_archivo);
-            return true;
-        }
-        return false;
+    function obtenerDistribucionCalificaciones($id_producto) {
+        $this->conect();
+        $sql = "SELECT 
+                calificacion,
+                COUNT(*) as cantidad,
+                (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM resenas WHERE id_producto = :id_producto)) as porcentaje
+                FROM resenas
+                WHERE id_producto = :id_producto
+                GROUP BY calificacion
+                ORDER BY calificacion DESC";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_producto", $id_producto, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+class CalificacionVendedor extends Sistema {
+    
+    function create($data) {
+        $this->conect();
+        $sql = "INSERT INTO calificaciones_vendedor (id_vendedor, id_usuario, id_pedido, calificacion, comentario) 
+                VALUES (:id_vendedor, :id_usuario, :id_pedido, :calificacion, :comentario)";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_vendedor", $data['id_vendedor'], PDO::PARAM_INT);
+        $sth->bindParam(":id_usuario", $data['id_usuario'], PDO::PARAM_INT);
+        $sth->bindParam(":id_pedido", $data['id_pedido'], PDO::PARAM_INT);
+        $sth->bindParam(":calificacion", $data['calificacion'], PDO::PARAM_INT);
+        $sth->bindParam(":comentario", $data['comentario'], PDO::PARAM_STR);
+        $sth->execute();
+        return $sth->rowCount();
     }
 
-    function sanitizar($data) {
-        return htmlspecialchars(strip_tags(trim($data)));
+    function readByVendedor($id_vendedor) {
+        $this->conect();
+        $sql = "SELECT cv.*, u.nombre, u.apellido
+                FROM calificaciones_vendedor cv
+                INNER JOIN usuarios u ON cv.id_usuario = u.id_usuario
+                WHERE cv.id_vendedor = :id_vendedor
+                ORDER BY cv.fecha_calificacion DESC";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_vendedor", $id_vendedor, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    function validarEmail($email) {
-        return filter_var($email, FILTER_VALIDATE_EMAIL);
-    }
-
-    function formatearPrecio($precio) {
-        return '$' . number_format($precio, 2);
-    }
-
-    function formatearFecha($fecha) {
-        $meses = [
-            1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
-            5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
-            9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre'
-        ];
+    function usuarioPuedeCalificar($id_usuario, $id_vendedor, $id_pedido) {
+        $this->conect();
         
-        $timestamp = strtotime($fecha);
-        $dia = date('d', $timestamp);
-        $mes = $meses[date('n', $timestamp)];
-        $anio = date('Y', $timestamp);
+        $sql = "SELECT COUNT(*) as ya_califico
+                FROM calificaciones_vendedor
+                WHERE id_usuario = :id_usuario 
+                AND id_vendedor = :id_vendedor 
+                AND id_pedido = :id_pedido";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":id_usuario", $id_usuario, PDO::PARAM_INT);
+        $sth->bindParam(":id_vendedor", $id_vendedor, PDO::PARAM_INT);
+        $sth->bindParam(":id_pedido", $id_pedido, PDO::PARAM_INT);
+        $sth->execute();
+        $result = $sth->fetch(PDO::FETCH_ASSOC);
         
-        return "$dia de $mes de $anio";
+        return $result['ya_califico'] == 0;
     }
 }
 ?>
