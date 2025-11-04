@@ -235,5 +235,147 @@ class Sistema {
         
         return $html;
     }
+
+    function enviarCorreo($para, $asunto, $mensaje, $nombre = null) {
+        require_once __DIR__ . '/../vendor/autoload.php';
+        
+        $mail = new PHPMailer\PHPMailer\PHPMailer();
+        $mail->isSMTP();
+        $mail->SMTPDebug = PHPMailer\PHPMailer\SMTP::DEBUG_OFF;
+        $mail->Host = 'smtp.gmail.com';
+        $mail->Port = 465;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+        $mail->SMTPAuth = true;
+        
+        $mail->Username = '22030935@itcelaya.edu.mx';
+        $mail->Password = '3H2ULu9Z5a3FLsT7Q23ijg';
+        
+        $mail->setFrom('22030935@itcelaya.edu.mx', 'Amazon Lite');
+        $mail->addAddress($para, $nombre ? $nombre : 'Cliente');
+        $mail->Subject = $asunto;
+        $mail->msgHTML($mensaje);
+        $mail->CharSet = 'UTF-8';
+        
+        if (!$mail->send()) {
+            error_log("Error al enviar correo: " . $mail->ErrorInfo);
+            return false;
+        }
+        
+        return true;
+    }
+
+    function solicitarRecuperacion($email, $tipo = 'usuario') {
+        if(!$this->validarEmail($email)) {
+            return false;
+        }
+        
+        $this->conect();
+        
+        $token = bin2hex(random_bytes(32));
+        $token_hash = md5($token . 'AmazonLiteSecret2025');
+        $expiracion = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        
+        $tabla = $tipo === 'vendedor' ? 'vendedor' : 'usuario';
+        
+        $sql = "SELECT * FROM {$tabla} WHERE email = :email";
+        $stmt = $this->_BD->prepare($sql);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        if($stmt->rowCount() == 0) {
+            return false;
+        }
+        
+        $sql = "UPDATE {$tabla} SET token_recuperacion = :token, 
+                token_expiracion = :expiracion WHERE email = :email";
+        $stmt = $this->_BD->prepare($sql);
+        $stmt->bindParam(':token', $token_hash, PDO::PARAM_STR);
+        $stmt->bindParam(':expiracion', $expiracion, PDO::PARAM_STR);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        if($stmt->rowCount() > 0) {
+            $url_base = $tipo === 'vendedor' ? 'vendedor/recuperar_password.php' : 'recuperar_password.php';
+            $url_recuperacion = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . 
+                               "/{$url_base}?token={$token_hash}&email=" . urlencode($email);
+            
+            $asunto = "Recuperación de contraseña - Amazon Lite";
+            $mensaje = "
+                <html>
+                <body style='font-family: Arial, sans-serif;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                        <h2 style='color: #232F3E;'>Recuperación de contraseña</h2>
+                        <p>Hola,</p>
+                        <p>Recibimos una solicitud para restablecer tu contraseña de Amazon Lite.</p>
+                        <p>Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+                        <p style='text-align: center; margin: 30px 0;'>
+                            <a href='{$url_recuperacion}' 
+                               style='background-color: #FF9900; color: white; padding: 12px 30px; 
+                                      text-decoration: none; border-radius: 3px; display: inline-block;'>
+                                Restablecer contraseña
+                            </a>
+                        </p>
+                        <p>O copia y pega este enlace en tu navegador:</p>
+                        <p style='word-break: break-all; color: #0066c0;'>{$url_recuperacion}</p>
+                        <p><strong>Este enlace expirará en 1 hora.</strong></p>
+                        <p>Si no solicitaste restablecer tu contraseña, puedes ignorar este correo.</p>
+                        <hr style='margin: 30px 0; border: none; border-top: 1px solid #ddd;'>
+                        <p style='color: #666; font-size: 12px;'>
+                            Este es un correo automático, por favor no respondas a este mensaje.
+                        </p>
+                    </div>
+                </body>
+                </html>
+            ";
+            
+            return $this->enviarCorreo($email, $asunto, $mensaje);
+        }
+        
+        return false;
+    }
+
+    function verificarToken($email, $token, $tipo = 'usuario') {
+        $this->conect();
+        
+        $tabla = $tipo === 'vendedor' ? 'vendedor' : 'usuario';
+        
+        $sql = "SELECT * FROM {$tabla} 
+                WHERE email = :email 
+                AND token_recuperacion = :token 
+                AND token_expiracion > NOW()";
+        
+        $stmt = $this->_BD->prepare($sql);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->bindParam(':token', $token, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    }
+
+    function restablecerPassword($email, $token, $nueva_password, $tipo = 'usuario') {
+        if(!$this->verificarToken($email, $token, $tipo)) {
+            return false;
+        }
+        
+        $this->conect();
+        
+        $tabla = $tipo === 'vendedor' ? 'vendedor' : 'usuario';
+        $password_hash = password_hash($nueva_password, PASSWORD_DEFAULT);
+        
+        $sql = "UPDATE {$tabla} 
+                SET password = :password, 
+                    token_recuperacion = NULL, 
+                    token_expiracion = NULL 
+                WHERE email = :email 
+                AND token_recuperacion = :token";
+        
+        $stmt = $this->_BD->prepare($sql);
+        $stmt->bindParam(':password', $password_hash, PDO::PARAM_STR);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->bindParam(':token', $token, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    }
 }
 ?>
