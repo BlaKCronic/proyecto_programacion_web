@@ -1,0 +1,352 @@
+
+:root {
+    --primary: #4e73df;
+    --success: #1cc88a;
+    --info: #36b9cc;
+    --warning: #f6c23e;
+    --danger: #e74a3b;
+    --gray-800: #5a5c69;
+    --gray-300: #dddfeb;
+}
+
+body {
+    font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #858796;
+}
+
+#wrapper {
+    display: flex;
+}
+
+#content-wrapper {
+    background-color: #f8f9fc;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+#content {
+    flex: 1 0 auto;
+}
+
+.sidebar {
+    width: 6.5rem;
+    min-height: 100vh;
+}
+
+.sidebar .nav-item {
+    position: relative;
+}
+
+.sidebar .nav-link {
+    text-align: center;
+    padding: 0.75rem 1rem;
+    width: 6.5rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.sidebar .nav-link span {
+    font-size: 0.65rem;
+    display: block;
+}
+
+.sidebar .nav-link i {
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar .nav-link:hover {
+    color: #fff;
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    font-weight: 700;
+}
+
+.sidebar.toggled {
+    width: 0 !important;
+    overflow: hidden;
+}
+
+.sidebar:not(.toggled) {
+    width: 14rem !important;
+}
+
+.sidebar:not(.toggled) .nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 14rem;
+}
+
+.sidebar:not(.toggled) .nav-link i {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0;
+}
+
+.sidebar:not(.toggled) .nav-link span {
+    font-size: 0.85rem;
+    display: inline;
+}
+
+.sidebar-brand {
+    height: 4.375rem;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    z-index: 1;
+}
+
+.sidebar-brand-icon i {
+    font-size: 2rem;
+}
+
+.sidebar-brand-text {
+    display: none;
+}
+
+.sidebar:not(.toggled) .sidebar-brand-text {
+    display: inline;
+}
+
+.sidebar-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    margin: 0 1rem 1rem;
+}
+
+.sidebar-heading {
+    text-align: center;
+    padding: 0 1rem;
+    font-weight: 800;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
+}
+
+.topbar {
+    height: 4.375rem;
+}
+
+.topbar .navbar-search {
+    width: 25rem;
+}
+
+.topbar .navbar-search input {
+    font-size: 0.85rem;
+    height: calc(1.5em + 0.75rem + 2px);
+}
+
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+}
+
+.card-header {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid var(--primary) !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid var(--success) !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid var(--info) !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid var(--warning) !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid var(--danger) !important;
+}
+
+.text-xs {
+    font-size: 0.7rem !important;
+}
+
+.text-gray-300 {
+    color: var(--gray-300) !important;
+}
+
+.text-gray-800 {
+    color: var(--gray-800) !important;
+}
+
+.font-weight-bold {
+    font-weight: 700 !important;
+}
+
+.shadow {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.sticky-footer {
+    padding: 2rem 0;
+    flex-shrink: 0;
+}
+
+.scroll-to-top {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    text-align: center;
+    color: #fff;
+    background: rgba(90, 92, 105, 0.5);
+    line-height: 2.75rem;
+    border-radius: 100%;
+}
+
+.scroll-to-top:hover {
+    background: rgba(90, 92, 105, 0.7);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-success {
+    background-color: var(--success);
+    border-color: var(--success);
+}
+
+.btn-info {
+    background-color: var(--info);
+    border-color: var(--info);
+}
+
+.btn-warning {
+    background-color: var(--warning);
+    border-color: var(--warning);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    border-color: var(--danger);
+}
+
+.table {
+    color: #858796;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+@media (min-width: 768px) {
+    .sidebar {
+        width: 14rem !important;
+    }
+    
+    .sidebar .nav-link {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 14rem;
+    }
+    
+    .sidebar .nav-link i {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0;
+    }
+    
+    .sidebar .nav-link span {
+        font-size: 0.85rem;
+        display: inline;
+    }
+    
+    .sidebar-brand-text {
+        display: inline;
+    }
+    
+    .sidebar-heading {
+        text-align: left;
+    }
+    
+    .sidebar.toggled {
+        width: 6.5rem !important;
+    }
+    
+    .sidebar.toggled .nav-link {
+        text-align: center;
+        padding: 0.75rem 1rem;
+        width: 6.5rem;
+        justify-content: center;
+    }
+    
+    .sidebar.toggled .nav-link span {
+        font-size: 0.65rem;
+        display: block;
+    }
+    
+    .sidebar.toggled .nav-link i {
+        font-size: 1.5rem;
+        display: block;
+        margin-right: 0;
+        margin-bottom: 0.25rem;
+    }
+    
+    .sidebar.toggled .sidebar-brand-text {
+        display: none;
+    }
+}
+
+#sidebarToggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#sidebarToggle:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+#sidebarToggle::after {
+    font-weight: 900;
+    content: '\f104';
+    font-family: 'FontAwesome';
+    margin-right: 0.1rem;
+}
+
+.sidebar.toggled #sidebarToggle::after {
+    content: '\f105';
+    font-family: 'FontAwesome';
+    margin-left: 0.25rem;
+}
+
+.sidebar.toggled .sidebar-card {
+    display: none;
+}
