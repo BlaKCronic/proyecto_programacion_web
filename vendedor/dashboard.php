@@ -29,6 +29,62 @@ $ganancias_netas = $ventas_totales - $comisiones_totales;
 $pedidos_recientes = $appPedido->readByVendedor($vendedor_id);
 $pedidos_recientes = array_slice($pedidos_recientes, 0, 5);
 
+$ventas_por_dia = [];
+for($i = 6; $i >= 0; $i--) {
+    $fecha = date('Y-m-d', strtotime("-$i days"));
+    
+    $sql_dia = "SELECT SUM(dp.subtotal) as total
+                FROM detalle_pedidos dp
+                INNER JOIN pedidos p ON dp.id_pedido = p.id_pedido
+                WHERE dp.id_vendedor = :vendedor_id 
+                AND DATE(p.fecha_pedido) = :fecha";
+    
+    $sistema = new Sistema();
+    $sistema->conect();
+    $stmt = $sistema->_BD->prepare($sql_dia);
+    $stmt->bindParam(':vendedor_id', $vendedor_id, PDO::PARAM_INT);
+    $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
+    $stmt->execute();
+    $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $ventas_por_dia[] = [
+        'fecha' => date('d/m', strtotime($fecha)),
+        'total' => $resultado['total'] ?? 0
+    ];
+}
+
+$sql_top = "SELECT p.nombre, SUM(dp.cantidad) as total_vendido, p.imagen_principal
+            FROM detalle_pedidos dp
+            INNER JOIN productos p ON dp.id_producto = p.id_producto
+            WHERE dp.id_vendedor = :vendedor_id
+            GROUP BY dp.id_producto
+            ORDER BY total_vendido DESC
+            LIMIT 5";
+
+$sistema = new Sistema();
+$sistema->conect();
+$stmt = $sistema->_BD->prepare($sql_top);
+$stmt->bindParam(':vendedor_id', $vendedor_id, PDO::PARAM_INT);
+$stmt->execute();
+$top_productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$sql_categorias = "SELECT c.nombre, COUNT(p.id_producto) as cantidad
+                   FROM productos p
+                   INNER JOIN categorias c ON p.id_categoria = c.id_categoria
+                   WHERE p.id_vendedor = :vendedor_id
+                   GROUP BY c.id_categoria
+                   ORDER BY cantidad DESC";
+
+$stmt = $sistema->_BD->prepare($sql_categorias);
+$stmt->bindParam(':vendedor_id', $vendedor_id, PDO::PARAM_INT);
+$stmt->execute();
+$productos_por_categoria = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stock_alto = count(array_filter($productos, fn($p) => $p['stock'] >= 20));
+$stock_medio = count(array_filter($productos, fn($p) => $p['stock'] >= 10 && $p['stock'] < 20));
+$stock_bajo = count(array_filter($productos, fn($p) => $p['stock'] > 0 && $p['stock'] < 10));
+$sin_stock = $productos_sin_stock;
+
 $pageTitle = 'Dashboard - ' . $vendedor['nombre_tienda'];
 include_once "views/header.php";
 ?>
@@ -157,6 +213,76 @@ include_once "views/header.php";
                 </div>
             <?php endif; ?>
 
+            <div class="row mb-4">
+                <div class="col-xl-8 col-lg-7 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-graph-up"></i> Ventas de los últimos 7 días
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="ventasDiasChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4 col-lg-5 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-boxes"></i> Estado del Inventario
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="stockChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-xl-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-trophy"></i> Top 5 Productos Más Vendidos
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <?php if(!empty($top_productos)): ?>
+                                <canvas id="topProductosChart"></canvas>
+                            <?php else: ?>
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    <p>Aún no tienes ventas registradas</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-pie-chart"></i> Productos por Categoría
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <?php if(!empty($productos_por_categoria)): ?>
+                                <canvas id="categoriasChart"></canvas>
+                            <?php else: ?>
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    <p>No tienes productos registrados</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-lg-8 mb-4">
                     <div class="card shadow">
@@ -279,6 +405,158 @@ include_once "views/header.php";
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const ctxVentas = document.getElementById('ventasDiasChart');
+if(ctxVentas) {
+    new Chart(ctxVentas, {
+        type: 'line',
+        data: {
+            labels: <?= json_encode(array_column($ventas_por_dia, 'fecha')) ?>,
+            datasets: [{
+                label: 'Ventas',
+                data: <?= json_encode(array_column($ventas_por_dia, 'total')) ?>,
+                borderColor: 'rgb(254, 189, 105)',
+                backgroundColor: 'rgba(254, 189, 105, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+const ctxStock = document.getElementById('stockChart');
+if(ctxStock) {
+    new Chart(ctxStock, {
+        type: 'doughnut',
+        data: {
+            labels: ['Stock Alto (20+)', 'Stock Medio (10-19)', 'Stock Bajo (1-9)', 'Sin Stock'],
+            datasets: [{
+                data: [<?= $stock_alto ?>, <?= $stock_medio ?>, <?= $stock_bajo ?>, <?= $sin_stock ?>],
+                backgroundColor: [
+                    'rgb(28, 200, 138)',
+                    'rgb(54, 185, 204)',
+                    'rgb(246, 194, 62)',
+                    'rgb(231, 74, 59)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+const ctxTopProductos = document.getElementById('topProductosChart');
+if(ctxTopProductos) {
+    new Chart(ctxTopProductos, {
+        type: 'bar',
+        data: {
+            labels: [
+                <?php foreach($top_productos as $tp): ?>
+                    '<?= htmlspecialchars(substr($tp['nombre'], 0, 30)) . (strlen($tp['nombre']) > 30 ? '...' : '') ?>',
+                <?php endforeach; ?>
+            ],
+            datasets: [{
+                label: 'Unidades vendidas',
+                data: [
+                    <?php foreach($top_productos as $tp): ?>
+                        <?= $tp['total_vendido'] ?>,
+                    <?php endforeach; ?>
+                ],
+                backgroundColor: 'rgba(254, 189, 105, 0.8)'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+const ctxCategorias = document.getElementById('categoriasChart');
+if(ctxCategorias) {
+    new Chart(ctxCategorias, {
+        type: 'pie',
+        data: {
+            labels: <?= json_encode(array_column($productos_por_categoria, 'nombre')) ?>,
+            datasets: [{
+                data: <?= json_encode(array_column($productos_por_categoria, 'cantidad')) ?>,
+                backgroundColor: [
+                    'rgb(78, 115, 223)',
+                    'rgb(28, 200, 138)',
+                    'rgb(54, 185, 204)',
+                    'rgb(246, 194, 62)',
+                    'rgb(231, 74, 59)',
+                    'rgb(133, 135, 150)',
+                    'rgb(90, 92, 105)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+
 <style>
 .border-left-primary {
     border-left: 4px solid #4e73df !important;
@@ -299,6 +577,14 @@ include_once "views/header.php";
 .text-xs {
     font-size: 0.7rem;
     font-weight: bold;
+}
+
+.font-weight-bold {
+    font-weight: 700 !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
 }
 </style>
 
