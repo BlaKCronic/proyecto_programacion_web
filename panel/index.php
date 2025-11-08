@@ -31,9 +31,52 @@ $ventas_totales = $estadisticas['ventas_totales'] ?? 0;
 $comisiones_totales = $estadisticas['comisiones_totales'] ?? 0;
 
 $ultimos_pedidos = array_slice($pedidos, 0, 5);
-
 $usuarios = $appUsuario->read();
 $ultimos_usuarios = array_slice($usuarios, 0, 5);
+
+$ventas_por_dia = [];
+for($i = 6; $i >= 0; $i--) {
+    $fecha = date('Y-m-d', strtotime("-$i days"));
+    $ventas_dia = array_filter($pedidos, function($p) use ($fecha) {
+        return date('Y-m-d', strtotime($p['fecha_pedido'])) == $fecha;
+    });
+    $total_dia = array_sum(array_column($ventas_dia, 'total'));
+    $ventas_por_dia[] = [
+        'fecha' => date('d/m', strtotime($fecha)),
+        'total' => $total_dia
+    ];
+}
+
+$estados_pedidos = [
+    'pendiente' => 0,
+    'procesando' => 0,
+    'enviado' => 0,
+    'entregado' => 0,
+    'cancelado' => 0
+];
+foreach($pedidos as $pedido) {
+    if(isset($estados_pedidos[$pedido['estado']])) {
+        $estados_pedidos[$pedido['estado']]++;
+    }
+}
+
+$productos_por_categoria = [];
+$productos = $appProducto->read();
+foreach($categorias = $appCategoria->readAll() as $cat) {
+    $count = count(array_filter($productos, fn($p) => $p['id_categoria'] == $cat['id_categoria']));
+    if($count > 0) {
+        $productos_por_categoria[] = [
+            'nombre' => $cat['nombre'],
+            'cantidad' => $count
+        ];
+    }
+}
+
+$vendedores_todos = $appVendedor->read();
+usort($vendedores_todos, function($a, $b) {
+    return $b['total_ventas'] - $a['total_ventas'];
+});
+$top_vendedores = array_slice($vendedores_todos, 0, 5);
 
 $pageTitle = 'Dashboard - Panel Admin';
 include_once "views/header.php";
@@ -179,6 +222,62 @@ include_once "views/header.php";
     </div>
 
     <div class="row">
+        <div class="col-xl-8 col-lg-7 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-graph-up"></i> Ventas de los últimos 7 días
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="ventasDiasChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-pie-chart"></i> Pedidos por Estado
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="pedidosEstadoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-bar-chart"></i> Productos por Categoría
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="productosCategoria"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-trophy"></i> Top 5 Vendedores
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="topVendedoresChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
         <div class="col-xl-8 col-lg-7">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -269,5 +368,145 @@ include_once "views/header.php";
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const ctxVentas = document.getElementById('ventasDiasChart').getContext('2d');
+new Chart(ctxVentas, {
+    type: 'line',
+    data: {
+        labels: <?= json_encode(array_column($ventas_por_dia, 'fecha')) ?>,
+        datasets: [{
+            label: 'Ventas',
+            data: <?= json_encode(array_column($ventas_por_dia, 'total')) ?>,
+            borderColor: 'rgb(78, 115, 223)',
+            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+const ctxEstado = document.getElementById('pedidosEstadoChart').getContext('2d');
+new Chart(ctxEstado, {
+    type: 'doughnut',
+    data: {
+        labels: ['Pendiente', 'Procesando', 'Enviado', 'Entregado', 'Cancelado'],
+        datasets: [{
+            data: [
+                <?= $estados_pedidos['pendiente'] ?>,
+                <?= $estados_pedidos['procesando'] ?>,
+                <?= $estados_pedidos['enviado'] ?>,
+                <?= $estados_pedidos['entregado'] ?>,
+                <?= $estados_pedidos['cancelado'] ?>
+            ],
+            backgroundColor: [
+                'rgb(246, 194, 62)',
+                'rgb(54, 185, 204)',
+                'rgb(78, 115, 223)',
+                'rgb(28, 200, 138)',
+                'rgb(231, 74, 59)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+const ctxCategorias = document.getElementById('productosCategoria').getContext('2d');
+new Chart(ctxCategorias, {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode(array_column($productos_por_categoria, 'nombre')) ?>,
+        datasets: [{
+            label: 'Productos',
+            data: <?= json_encode(array_column($productos_por_categoria, 'cantidad')) ?>,
+            backgroundColor: 'rgba(54, 185, 204, 0.8)'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+const ctxVendedores = document.getElementById('topVendedoresChart').getContext('2d');
+new Chart(ctxVendedores, {
+    type: 'bar',
+    data: {
+        labels: [
+            <?php foreach($top_vendedores as $v): ?>
+                '<?= htmlspecialchars(substr($v['nombre_tienda'], 0, 20)) ?>',
+            <?php endforeach; ?>
+        ],
+        datasets: [{
+            label: 'Total Ventas',
+            data: [
+                <?php foreach($top_vendedores as $v): ?>
+                    <?= $v['total_ventas'] ?>,
+                <?php endforeach; ?>
+            ],
+            backgroundColor: 'rgba(28, 200, 138, 0.8)'
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
 
 <?php include_once "views/footer.php"; ?>
