@@ -275,7 +275,7 @@ class Sistema {
         $token_hash = md5($token . 'AmazonLiteSecret2025');
         $expiracion = date('Y-m-d H:i:s', strtotime('+1 hour'));
         
-        $tabla = $tipo === 'vendedor' ? 'vendedor' : 'usuario';
+    $tabla = $tipo === 'vendedor' ? 'vendedores' : 'usuarios';
         
         $sql = "SELECT * FROM {$tabla} WHERE email = :email";
         $stmt = $this->_BD->prepare($sql);
@@ -286,15 +286,62 @@ class Sistema {
             return false;
         }
         
-        $sql = "UPDATE {$tabla} SET token_recuperacion = :token, 
-                token_expiracion = :expiracion WHERE email = :email";
-        $stmt = $this->_BD->prepare($sql);
-        $stmt->bindParam(':token', $token_hash, PDO::PARAM_STR);
-        $stmt->bindParam(':expiracion', $expiracion, PDO::PARAM_STR);
-        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-        $stmt->execute();
-        
-        if($stmt->rowCount() > 0) {
+        try {
+            $colCheck = $this->_BD->query("SHOW COLUMNS FROM {$tabla} LIKE 'token_recuperacion'")->fetch();
+
+            if($colCheck) {
+                $sql = "UPDATE {$tabla} SET token_recuperacion = :token, 
+                        token_expiracion = :expiracion WHERE email = :email";
+                $stmt = $this->_BD->prepare($sql);
+                $stmt->bindParam(':token', $token_hash, PDO::PARAM_STR);
+                $stmt->bindParam(':expiracion', $expiracion, PDO::PARAM_STR);
+                $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+                $stmt->execute();
+
+                $ok = $stmt->rowCount() > 0;
+            } else {
+                $this->_BD->exec("CREATE TABLE IF NOT EXISTS password_resets (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    email VARCHAR(255) NOT NULL,
+                    token VARCHAR(255) NOT NULL,
+                    expiracion DATETIME NOT NULL,
+                    tipo VARCHAR(50) DEFAULT 'usuario',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    INDEX(email),
+                    INDEX(token)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+                $sql = "SELECT id FROM password_resets WHERE email = :email AND tipo = :tipo";
+                $stmt = $this->_BD->prepare($sql);
+                $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+                $stmt->bindParam(':tipo', $tipo, PDO::PARAM_STR);
+                $stmt->execute();
+
+                if($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $sql = "UPDATE password_resets SET token = :token, expiracion = :expiracion WHERE id = :id";
+                    $stmt = $this->_BD->prepare($sql);
+                    $stmt->bindParam(':token', $token_hash, PDO::PARAM_STR);
+                    $stmt->bindParam(':expiracion', $expiracion, PDO::PARAM_STR);
+                    $stmt->bindParam(':id', $row['id'], PDO::PARAM_INT);
+                    $stmt->execute();
+                    $ok = $stmt->rowCount() >= 0;
+                } else {
+                    $sql = "INSERT INTO password_resets (email, token, expiracion, tipo) VALUES (:email, :token, :expiracion, :tipo)";
+                    $stmt = $this->_BD->prepare($sql);
+                    $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+                    $stmt->bindParam(':token', $token_hash, PDO::PARAM_STR);
+                    $stmt->bindParam(':expiracion', $expiracion, PDO::PARAM_STR);
+                    $stmt->bindParam(':tipo', $tipo, PDO::PARAM_STR);
+                    $stmt->execute();
+                    $ok = $stmt->rowCount() > 0;
+                }
+            }
+        } catch(PDOException $e) {
+            error_log('Error en solicitarRecuperacion: ' . $e->getMessage());
+            return false;
+        }
+
+        if(!empty($ok)) {
             $url_base = $tipo === 'vendedor' ? 'vendedor/recuperar_password.php' : 'recuperar_password.php';
             $url_recuperacion = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . 
                                "/{$url_base}?token={$token_hash}&email=" . urlencode($email);
@@ -336,20 +383,35 @@ class Sistema {
 
     function verificarToken($email, $token, $tipo = 'usuario') {
         $this->conect();
-        
-        $tabla = $tipo === 'vendedor' ? 'vendedor' : 'usuario';
-        
-        $sql = "SELECT * FROM {$tabla} 
-                WHERE email = :email 
-                AND token_recuperacion = :token 
-                AND token_expiracion > NOW()";
-        
-        $stmt = $this->_BD->prepare($sql);
-        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-        $stmt->bindParam(':token', $token, PDO::PARAM_STR);
-        $stmt->execute();
-        
-        return $stmt->rowCount() > 0;
+
+        $tabla = $tipo === 'vendedor' ? 'vendedores' : 'usuarios';
+
+        try {
+            $colCheck = $this->_BD->query("SHOW COLUMNS FROM {$tabla} LIKE 'token_recuperacion'")->fetch();
+
+            if($colCheck) {
+                $sql = "SELECT * FROM {$tabla} 
+                        WHERE email = :email 
+                        AND token_recuperacion = :token 
+                        AND token_expiracion > NOW()";
+                $stmt = $this->_BD->prepare($sql);
+                $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+                $stmt->bindParam(':token', $token, PDO::PARAM_STR);
+                $stmt->execute();
+                return $stmt->rowCount() > 0;
+            }
+
+            $sql = "SELECT * FROM password_resets WHERE email = :email AND token = :token AND expiracion > NOW() AND tipo = :tipo";
+            $stmt = $this->_BD->prepare($sql);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->bindParam(':token', $token, PDO::PARAM_STR);
+            $stmt->bindParam(':tipo', $tipo, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->rowCount() > 0;
+        } catch(PDOException $e) {
+            error_log('Error en verificarToken: ' . $e->getMessage());
+            return false;
+        }
     }
 
     function restablecerPassword($email, $token, $nueva_password, $tipo = 'usuario') {
@@ -359,23 +421,48 @@ class Sistema {
         
         $this->conect();
         
-        $tabla = $tipo === 'vendedor' ? 'vendedor' : 'usuario';
+        $tabla = $tipo === 'vendedor' ? 'vendedores' : 'usuarios';
         $password_hash = password_hash($nueva_password, PASSWORD_DEFAULT);
-        
-        $sql = "UPDATE {$tabla} 
-                SET password = :password, 
-                    token_recuperacion = NULL, 
-                    token_expiracion = NULL 
-                WHERE email = :email 
-                AND token_recuperacion = :token";
-        
-        $stmt = $this->_BD->prepare($sql);
-        $stmt->bindParam(':password', $password_hash, PDO::PARAM_STR);
-        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-        $stmt->bindParam(':token', $token, PDO::PARAM_STR);
-        $stmt->execute();
-        
-        return $stmt->rowCount() > 0;
+
+        try {
+            $colCheck = $this->_BD->query("SHOW COLUMNS FROM {$tabla} LIKE 'token_recuperacion'")->fetch();
+
+            if($colCheck) {
+                $sql = "UPDATE {$tabla} 
+                        SET password = :password, 
+                            token_recuperacion = NULL, 
+                            token_expiracion = NULL 
+                        WHERE email = :email 
+                        AND token_recuperacion = :token";
+
+                $stmt = $this->_BD->prepare($sql);
+                $stmt->bindParam(':password', $password_hash, PDO::PARAM_STR);
+                $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+                $stmt->bindParam(':token', $token, PDO::PARAM_STR);
+                $stmt->execute();
+
+                return $stmt->rowCount() > 0;
+            }
+
+            $sql = "UPDATE {$tabla} SET password = :password WHERE email = :email";
+            $stmt = $this->_BD->prepare($sql);
+            $stmt->bindParam(':password', $password_hash, PDO::PARAM_STR);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->execute();
+
+            // Eliminar token usado
+            $sql = "DELETE FROM password_resets WHERE email = :email AND token = :token AND tipo = :tipo";
+            $stmt = $this->_BD->prepare($sql);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->bindParam(':token', $token, PDO::PARAM_STR);
+            $stmt->bindParam(':tipo', $tipo, PDO::PARAM_STR);
+            $stmt->execute();
+
+            return true;
+        } catch(PDOException $e) {
+            error_log('Error en restablecerPassword: ' . $e->getMessage());
+            return false;
+        }
     }
 }
 ?>
