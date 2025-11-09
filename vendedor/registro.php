@@ -1,6 +1,7 @@
 <?php
 require_once "../config/config.php";
 require_once "../models/vendedor.php";
+require_once "../models/Validator.php";
 
 $app = new Vendedor();
 $mensaje = '';
@@ -12,38 +13,37 @@ if(esVendedor()) {
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
     $data = [];
-    $data['nombre_tienda'] = $app->sanitizar($_POST['nombre_tienda']);
-    $data['email'] = $app->sanitizar($_POST['email']);
-    $data['nombre_contacto'] = $app->sanitizar($_POST['nombre_contacto']);
-    $data['telefono'] = $app->sanitizar($_POST['telefono']);
-    $data['direccion'] = $app->sanitizar($_POST['direccion']);
-    $data['rfc'] = $app->sanitizar($_POST['rfc']);
-    $data['razon_social'] = $app->sanitizar($_POST['razon_social']);
-    $data['descripcion'] = $app->sanitizar($_POST['descripcion']);
-    $password = $_POST['password'];
-    $password_confirm = $_POST['password_confirm'];
-    
-    if(empty($data['nombre_tienda']) || empty($data['email']) || empty($data['nombre_contacto']) ||
-       empty($data['telefono']) || empty($data['direccion']) || empty($password)) {
-        $mensaje = 'Por favor complete todos los campos obligatorios';
-        $tipo_mensaje = 'warning';
-    } else if(!$app->validarEmail($data['email'])) {
-        $mensaje = 'El formato del email no es válido';
-        $tipo_mensaje = 'warning';
-    } else if(strlen($password) < 6) {
-        $mensaje = 'La contraseña debe tener al menos 6 caracteres';
-        $tipo_mensaje = 'warning';
-    } else if($password !== $password_confirm) {
+    $data['nombre_tienda'] = $_POST['nombre_tienda'] ?? '';
+    $data['email'] = $_POST['email'] ?? '';
+    $data['nombre_contacto'] = $_POST['nombre_contacto'] ?? '';
+    $data['telefono'] = $_POST['telefono'] ?? '';
+    $data['direccion'] = $_POST['direccion'] ?? '';
+    $data['rfc'] = $_POST['rfc'] ?? '';
+    $data['razon_social'] = $_POST['razon_social'] ?? '';
+    $data['descripcion'] = $_POST['descripcion'] ?? '';
+    $data['password'] = $_POST['password'] ?? '';
+    $password_confirm = $_POST['password_confirm'] ?? '';
+
+    $validacion = ValidatorHelper::validarRegistroVendedor($data);
+
+    if(!$validacion['valido']) {
+        $mensaje = ValidatorHelper::formatearErrores($validacion['errores']);
+        $tipo_mensaje = 'danger';
+    } else if($data['password'] !== $password_confirm) {
         $mensaje = 'Las contraseñas no coinciden';
         $tipo_mensaje = 'warning';
     } else if($app->emailExists($data['email'])) {
         $mensaje = 'Este email ya está registrado';
         $tipo_mensaje = 'danger';
     } else {
-        $data['password'] = $password;
-        
+        foreach($data as $k => $v) {
+            if($k !== 'password') {
+                $data[$k] = $app->sanitizar($v);
+            }
+        }
+
         $id_vendedor = $app->create($data);
-        
+
         if($id_vendedor > 0) {
             $mensaje = '¡Registro exitoso! Tu cuenta está pendiente de aprobación. Te notificaremos por email cuando sea aprobada.';
             $tipo_mensaje = 'success';

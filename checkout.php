@@ -4,6 +4,7 @@ require_once "models/carrito.php";
 require_once "models/pedido.php";
 require_once "models/usuario.php";
 require_once "models/producto.php";
+require_once "models/Validator.php";
 
 if(!estaLogueado()) {
     redirect('login.php');
@@ -40,14 +41,22 @@ $tipo_mensaje = '';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
     if(isset($_POST['confirmar_direccion'])) {
-        $_SESSION['checkout_direccion'] = [
-            'direccion' => $_POST['direccion'],
-            'ciudad' => $_POST['ciudad'],
-            'estado' => $_POST['estado'],
-            'codigo_postal' => $_POST['codigo_postal'],
-            'telefono' => $_POST['telefono']
+        $direccionDatos = [
+            'direccion' => $_POST['direccion'] ?? '',
+            'ciudad' => $_POST['ciudad'] ?? '',
+            'estado' => $_POST['estado'] ?? '',
+            'codigo_postal' => $_POST['codigo_postal'] ?? '',
+            'telefono' => $_POST['telefono'] ?? ''
         ];
-        redirect('checkout.php?step=2');
+
+        $validacion = ValidatorHelper::validarDireccionEnvio($direccionDatos);
+        if(!$validacion['valido']) {
+            $mensaje = ValidatorHelper::formatearErrores($validacion['errores']);
+            $tipo_mensaje = 'danger';
+        } else {
+            $_SESSION['checkout_direccion'] = $direccionDatos;
+            redirect('checkout.php?step=2');
+        }
     } elseif(isset($_POST['confirmar_pago'])) {
         $_SESSION['checkout_pago'] = [
             'metodo' => $_POST['metodo_pago']

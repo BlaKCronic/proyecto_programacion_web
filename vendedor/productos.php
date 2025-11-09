@@ -3,6 +3,7 @@ require_once "../config/config.php";
 require_once "../models/vendedor.php";
 require_once "../models/producto.php";
 require_once "../models/categoria.php";
+require_once "../models/Validator.php";
 
 if(!esVendedor()) {
     redirect('login.php');
@@ -35,24 +36,31 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
         $data['marca'] = $appProducto->sanitizar($_POST['marca']);
         $data['peso'] = !empty($_POST['peso']) ? (float)$_POST['peso'] : null;
         $data['dimensiones'] = $appProducto->sanitizar($_POST['dimensiones']);
-        
-        $data['imagen_principal'] = $appProducto->cargarImagen('imagen_principal', 'productos');
-        
-        $data['imagenes_adicionales'] = $appProducto->cargarImagenesAdicionales('productos');
-        
-        if($data['imagen_principal']) {
-            $id_producto = $appProducto->create($data);
-            if($id_producto) {
-                $mensaje = 'Producto creado exitosamente';
-                $tipo_mensaje = 'success';
-                $action = 'list';
-            } else {
-                $mensaje = 'Error al crear el producto';
-                $tipo_mensaje = 'danger';
-            }
+        $validacion = ValidatorHelper::validarProducto($data);
+
+        if(!$validacion['valido']) {
+            $mensaje = ValidatorHelper::formatearErrores($validacion['errores']);
+            $tipo_mensaje = 'danger';
+            $action = 'create';
         } else {
-            $mensaje = 'Debes cargar al menos una imagen principal';
-            $tipo_mensaje = 'warning';
+            $data['imagen_principal'] = $appProducto->cargarImagen('imagen_principal', 'productos');
+            $data['imagenes_adicionales'] = $appProducto->cargarImagenesAdicionales('productos');
+
+            if($data['imagen_principal']) {
+                $id_producto = $appProducto->create($data);
+                if($id_producto) {
+                    $mensaje = 'Producto creado exitosamente';
+                    $tipo_mensaje = 'success';
+                    $action = 'list';
+                } else {
+                    $mensaje = 'Error al crear el producto';
+                    $tipo_mensaje = 'danger';
+                }
+            } else {
+                $mensaje = 'Debes cargar al menos una imagen principal';
+                $tipo_mensaje = 'warning';
+                $action = 'create';
+            }
         }
     } elseif(isset($_POST['actualizar_producto'])) {
         $id_producto = (int)$_POST['id_producto'];
@@ -71,17 +79,25 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
             $data['peso'] = !empty($_POST['peso']) ? (float)$_POST['peso'] : null;
             $data['dimensiones'] = $appProducto->sanitizar($_POST['dimensiones']);
             $data['activo'] = isset($_POST['activo']) ? 1 : 0;
-            
-            $nueva_imagen = $appProducto->cargarImagen('imagen_principal', 'productos');
-            $data['imagen_principal'] = $nueva_imagen ? $nueva_imagen : $producto_actual['imagen_principal'];
-            
-            $nuevas_imagenes = $appProducto->cargarImagenesAdicionales('productos');
-            $data['imagenes_adicionales'] = $nuevas_imagenes ? $nuevas_imagenes : $producto_actual['imagenes_adicionales'];
-            
-            $filas = $appProducto->update($data, $id_producto);
-            $mensaje = 'Producto actualizado exitosamente';
-            $tipo_mensaje = 'success';
-            $action = 'list';
+
+            $validacion = ValidatorHelper::validarProducto($data);
+
+            if(!$validacion['valido']) {
+                $mensaje = ValidatorHelper::formatearErrores($validacion['errores']);
+                $tipo_mensaje = 'danger';
+                $action = 'edit';
+            } else {
+                $nueva_imagen = $appProducto->cargarImagen('imagen_principal', 'productos');
+                $data['imagen_principal'] = $nueva_imagen ? $nueva_imagen : $producto_actual['imagen_principal'];
+
+                $nuevas_imagenes = $appProducto->cargarImagenesAdicionales('productos');
+                $data['imagenes_adicionales'] = $nuevas_imagenes ? $nuevas_imagenes : $producto_actual['imagenes_adicionales'];
+
+                $filas = $appProducto->update($data, $id_producto);
+                $mensaje = 'Producto actualizado exitosamente';
+                $tipo_mensaje = 'success';
+                $action = 'list';
+            }
         }
     } elseif(isset($_POST['eliminar_producto'])) {
         $id_producto = (int)$_POST['id_producto'];

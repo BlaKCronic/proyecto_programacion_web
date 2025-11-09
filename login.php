@@ -2,11 +2,13 @@
 require_once "config/config.php";
 require_once "models/usuario.php";
 require_once "models/sistema.php";
+require_once "models/Validator.php";
 
 $app = new Usuario();
 $sistema = new Sistema();
 $mensaje = '';
 $tipo_mensaje = '';
+$validacion = null;
 
 if(estaLogueado()) {
     redirect('index.php');
@@ -15,16 +17,19 @@ if(estaLogueado()) {
 $vista = isset($_GET['vista']) ? $_GET['vista'] : 'login';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
-    $email = $app->sanitizar($_POST['email']);
-    $password = $_POST['password'];
+    $datos = [
+        'email' => $_POST['email'] ?? '',
+        'password' => $_POST['password'] ?? ''
+    ];
     
-    if(empty($email) || empty($password)) {
-        $mensaje = 'Por favor complete todos los campos';
-        $tipo_mensaje = 'warning';
-    } else if(!$app->validarEmail($email)) {
-        $mensaje = 'El formato del email no es válido';
-        $tipo_mensaje = 'warning';
+    $validacion = ValidatorHelper::validarLogin($datos);
+    
+    if(!$validacion['valido']) {
+        $tipo_mensaje = 'danger';
     } else {
+        $email = $app->sanitizar($datos['email']);
+        $password = $datos['password'];
+        
         $usuario = $app->login($email, $password);
         
         if($usuario) {
@@ -46,7 +51,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
 }
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['solicitar_recuperacion'])) {
-    $email = $sistema->sanitizar($_POST['email']);
+    $email = $sistema->sanitizar($_POST['email'] ?? '');
     
     if(empty($email)) {
         $mensaje = 'Por favor ingresa tu correo electrónico';
@@ -84,19 +89,49 @@ include_once "views/header.php";
                         <?= mostrarAlerta($mensaje, $tipo_mensaje) ?>
                     <?php endif; ?>
 
+                    <?php if($validacion && !$validacion['valido'] && !$mensaje): ?>
+                        <?= ValidatorHelper::formatearErrores($validacion['errores']) ?>
+                    <?php endif; ?>
+
                     <?php if($vista == 'login'): ?>
-                        <form method="POST" action="login.php">
+                        <form method="POST" action="login.php" id="formLogin">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" 
-                                       placeholder="tu@email.com" required 
-                                       value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>">
+                                <input type="email" 
+                                       class="form-control <?= isset($validacion) ? ValidatorHelper::claseError($validacion['errores'], 'email') : '' ?>" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="tu@email.com"
+                                       value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>"
+                                       required 
+                                       autofocus>
+                                <?php if(isset($validacion) && ValidatorHelper::tieneError($validacion['errores'], 'email')): ?>
+                                    <div class="invalid-feedback d-block">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        <?= ValidatorHelper::obtenerPrimerError($validacion['errores'], 'email') ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="password" class="form-label">Contraseña</label>
-                                <input type="password" class="form-control" id="password" name="password" 
-                                       placeholder="Tu contraseña" required>
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control <?= isset($validacion) ? ValidatorHelper::claseError($validacion['errores'], 'password') : '' ?>" 
+                                           id="password" 
+                                           name="password" 
+                                           placeholder="Tu contraseña" 
+                                           required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye" id="eyeIcon"></i>
+                                    </button>
+                                </div>
+                                <?php if(isset($validacion) && ValidatorHelper::tieneError($validacion['errores'], 'password')): ?>
+                                    <div class="invalid-feedback d-block">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        <?= ValidatorHelper::obtenerPrimerError($validacion['errores'], 'password') ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
                             <div class="mb-3 form-check">
@@ -106,8 +141,8 @@ include_once "views/header.php";
                                 </label>
                             </div>
 
-                            <button type="submit" name="login" class="btn btn-warning w-100 mb-3">
-                                Iniciar sesión
+                            <button type="submit" name="login" class="btn btn-warning w-100 mb-3" id="btnLogin">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
                             </button>
 
                             <div class="text-center">
@@ -128,8 +163,13 @@ include_once "views/header.php";
                         <form method="POST" action="login.php?vista=recuperar">
                             <div class="mb-3">
                                 <label for="email_recuperar" class="form-label">Correo electrónico</label>
-                                <input type="email" class="form-control" id="email_recuperar" name="email" 
-                                       placeholder="tu@email.com" required>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email_recuperar" 
+                                       name="email" 
+                                       placeholder="tu@email.com" 
+                                       required
+                                       autofocus>
                             </div>
 
                             <button type="submit" name="solicitar_recuperacion" class="btn btn-warning w-100 mb-3">
@@ -207,6 +247,7 @@ include_once "views/header.php";
     background-color: #febd69;
     border-color: #febd69;
     color: #111;
+    font-weight: 500;
 }
 
 .btn-warning:hover {
@@ -215,10 +256,211 @@ include_once "views/header.php";
     color: #111;
 }
 
-.form-control:focus {
+.btn-warning:active,
+.btn-warning:focus {
+    background-color: #f3a847;
+    border-color: #f3a847;
+    color: #111;
+    box-shadow: 0 0 0 0.2rem rgba(254, 189, 105, 0.25);
+}
+
+.form-control:focus,
+.form-select:focus {
     border-color: #febd69;
     box-shadow: 0 0 0 0.2rem rgba(254, 189, 105, 0.25);
 }
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.invalid-feedback {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+}
+
+#btnLogin:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+a {
+    color: #0066c0;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #c45500;
+    text-decoration: underline;
+}
+
+.alert {
+    border-radius: 4px;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+    color: #842029;
+}
+
+.alert-success {
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+    color: #0f5132;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffecb5;
+    color: #664d03;
+}
+
+.alert-info {
+    background-color: #cff4fc;
+    border-color: #b6effb;
+    color: #055160;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.bi-check-circle-fill {
+    animation: checkmark 0.6s ease-out;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if(togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            if(type === 'text') {
+                eyeIcon.classList.remove('bi-eye');
+                eyeIcon.classList.add('bi-eye-slash');
+            } else {
+                eyeIcon.classList.remove('bi-eye-slash');
+                eyeIcon.classList.add('bi-eye');
+            }
+        });
+    }
+    
+    const formLogin = document.getElementById('formLogin');
+    if(formLogin) {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const btnLogin = document.getElementById('btnLogin');
+        
+        if(emailInput) {
+            emailInput.addEventListener('blur', function() {
+                const email = this.value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if(email === '') {
+                    this.classList.remove('is-valid', 'is-invalid');
+                } else if(!emailRegex.test(email)) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+            
+            emailInput.addEventListener('input', function() {
+                this.classList.remove('is-invalid', 'is-valid');
+            });
+        }
+        
+        if(passwordInput) {
+            passwordInput.addEventListener('blur', function() {
+                const password = this.value;
+                
+                if(password === '') {
+                    this.classList.remove('is-valid', 'is-invalid');
+                } else if(password.length < 6) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+            
+            passwordInput.addEventListener('input', function() {
+                this.classList.remove('is-invalid', 'is-valid');
+            });
+        }
+        
+        formLogin.addEventListener('submit', function(e) {
+            btnLogin.disabled = true;
+            btnLogin.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Iniciando sesión...';
+            
+            setTimeout(function() {
+                btnLogin.disabled = false;
+                btnLogin.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Iniciar sesión';
+            }, 3000);
+        });
+    }
+    
+    const emailInput = document.getElementById('email');
+    const recordarCheckbox = document.getElementById('recordar');
+    
+    if(emailInput && recordarCheckbox) {
+        const emailGuardado = localStorage.getItem('email_recordado');
+        if(emailGuardado) {
+            emailInput.value = emailGuardado;
+            recordarCheckbox.checked = true;
+        }
+        
+        recordarCheckbox.addEventListener('change', function() {
+            if(this.checked) {
+                localStorage.setItem('email_recordado', emailInput.value);
+            } else {
+                localStorage.removeItem('email_recordado');
+            }
+        });
+        
+        emailInput.addEventListener('change', function() {
+            if(recordarCheckbox.checked) {
+                localStorage.setItem('email_recordado', this.value);
+            }
+        });
+    }
+    
+    const primerError = document.querySelector('.is-invalid');
+    if(primerError) {
+        primerError.focus();
+    }
+});
+
+if(!document.querySelector('link[href*="bootstrap"]')) {
+    console.warn('Bootstrap CSS no detectado');
+}
+</script>
 
 <?php include_once "views/footer.php"; ?>

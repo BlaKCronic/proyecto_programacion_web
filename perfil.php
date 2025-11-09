@@ -2,6 +2,7 @@
 require_once "config/config.php";
 require_once "models/usuario.php";
 require_once "models/pedido.php";
+require_once "models/Validator.php";
 
 if(!estaLogueado()) {
     redirect('login.php');
@@ -68,28 +69,34 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
     } elseif(isset($_POST['cambiar_password'])) {
-        $password_actual = $_POST['password_actual'];
-        $password_nueva = $_POST['password_nueva'];
-        $password_confirmar = $_POST['password_confirmar'];
-        
-        // Validar contraseña actual
-        if(!password_verify($password_actual, $usuario['password'])) {
-            $mensaje = 'La contraseña actual es incorrecta';
+        $password_actual = $_POST['password_actual'] ?? '';
+        $password_nueva = $_POST['password_nueva'] ?? '';
+        $password_confirmar = $_POST['password_confirmar'] ?? '';
+
+        $datosPassword = [
+            'password_actual' => $password_actual,
+            'password_nueva' => $password_nueva,
+            'password_confirmar' => $password_confirmar
+        ];
+
+        $validacion = ValidatorHelper::validarCambioPassword($datosPassword);
+
+        if(!$validacion['valido']) {
+            $mensaje = ValidatorHelper::formatearErrores($validacion['errores']);
             $tipo_mensaje = 'danger';
-        } elseif(strlen($password_nueva) < 6) {
-            $mensaje = 'La nueva contraseña debe tener al menos 6 caracteres';
-            $tipo_mensaje = 'warning';
-        } elseif($password_nueva !== $password_confirmar) {
-            $mensaje = 'Las contraseñas nuevas no coinciden';
-            $tipo_mensaje = 'warning';
         } else {
-            $filas = $appUsuario->updatePassword($usuario_id, $password_nueva);
-            if($filas > 0) {
-                $mensaje = 'Contraseña actualizada correctamente';
-                $tipo_mensaje = 'success';
-            } else {
-                $mensaje = 'Error al actualizar la contraseña';
+            if(!password_verify($password_actual, $usuario['password'])) {
+                $mensaje = 'La contraseña actual es incorrecta';
                 $tipo_mensaje = 'danger';
+            } else {
+                $filas = $appUsuario->updatePassword($usuario_id, $password_nueva);
+                if($filas > 0) {
+                    $mensaje = 'Contraseña actualizada correctamente';
+                    $tipo_mensaje = 'success';
+                } else {
+                    $mensaje = 'Error al actualizar la contraseña';
+                    $tipo_mensaje = 'danger';
+                }
             }
         }
     }

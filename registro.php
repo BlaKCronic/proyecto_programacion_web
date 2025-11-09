@@ -11,45 +11,46 @@ if(estaLogueado()) {
 }
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
-    $data = [];
-    $data['nombre'] = $app->sanitizar($_POST['nombre']);
-    $data['apellido'] = $app->sanitizar($_POST['apellido']);
-    $data['email'] = $app->sanitizar($_POST['email']);
-    $data['telefono'] = $app->sanitizar($_POST['telefono']);
-    $password = $_POST['password'];
-    $password_confirm = $_POST['password_confirm'];
+    require_once "models/Validator.php";
     
-    if(empty($data['nombre']) || empty($data['apellido']) || empty($data['email']) || 
-       empty($password) || empty($password_confirm)) {
-        $mensaje = 'Por favor complete todos los campos obligatorios';
-        $tipo_mensaje = 'warning';
-    } else if(!$app->validarEmail($data['email'])) {
-        $mensaje = 'El formato del email no es válido';
-        $tipo_mensaje = 'warning';
-    } else if(strlen($password) < 6) {
-        $mensaje = 'La contraseña debe tener al menos 6 caracteres';
-        $tipo_mensaje = 'warning';
-    } else if($password !== $password_confirm) {
+    $data = [
+        'nombre' => $_POST['nombre'] ?? '',
+        'apellido' => $_POST['apellido'] ?? '',
+        'email' => $_POST['email'] ?? '',
+        'password' => $_POST['password'] ?? '',
+        'telefono' => $_POST['telefono'] ?? '',
+        'direccion' => $_POST['direccion'] ?? '',
+        'ciudad' => $_POST['ciudad'] ?? '',
+        'estado' => $_POST['estado'] ?? '',
+        'codigo_postal' => $_POST['codigo_postal'] ?? ''
+    ];
+    
+    $password_confirm = $_POST['password_confirm'] ?? '';
+    
+    $validacion = ValidatorHelper::validarRegistroUsuario($data);
+    
+    if(!$validacion['valido']) {
+        $mensaje = ValidatorHelper::formatearErrores($validacion['errores']);
+        $tipo_mensaje = 'danger';
+    } else if($data['password'] !== $password_confirm) {
         $mensaje = 'Las contraseñas no coinciden';
         $tipo_mensaje = 'warning';
     } else if($app->emailExists($data['email'])) {
         $mensaje = 'Este email ya está registrado';
         $tipo_mensaje = 'danger';
     } else {
-        $data['direccion'] = isset($_POST['direccion']) ? $app->sanitizar($_POST['direccion']) : '';
-        $data['ciudad'] = isset($_POST['ciudad']) ? $app->sanitizar($_POST['ciudad']) : '';
-        $data['estado'] = isset($_POST['estado']) ? $app->sanitizar($_POST['estado']) : '';
-        $data['codigo_postal'] = isset($_POST['codigo_postal']) ? $app->sanitizar($_POST['codigo_postal']) : '';
-        $data['password'] = $password;
+        foreach($data as $key => $value) {
+            if($key !== 'password') {
+                $data[$key] = $app->sanitizar($value);
+            }
+        }
         
         $filas = $app->create($data);
         
         if($filas > 0) {
             $mensaje = '¡Registro exitoso! Ahora puedes iniciar sesión';
             $tipo_mensaje = 'success';
-            
             $_POST = array();
-            
             header("refresh:2;url=login.php");
         } else {
             $mensaje = 'Error al registrar. Intenta nuevamente';
