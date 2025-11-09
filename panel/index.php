@@ -88,7 +88,7 @@ include_once "views/header.php";
             <i class="bi bi-speedometer2"></i> Dashboard
         </h1>
         <div class="d-none d-sm-inline-block">
-            <button class="btn btn-sm btn-primary shadow-sm">
+            <button class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalReportes">
                 <i class="bi bi-download"></i> Generar Reporte
             </button>
         </div>
@@ -368,6 +368,126 @@ include_once "views/header.php";
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalReportes" tabindex="-1" aria-labelledby="modalReportesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalReportesLabel">
+                    <i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="generar_reporte.php" method="POST" target="_blank" id="formReporte">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-file-text"></i> Tipo de Reporte
+                        </label>
+                        <select class="form-select" name="tipo_reporte" required>
+                            <option value="ventas">📊 Reporte de Ventas</option>
+                            <option value="productos">📦 Reporte de Productos</option>
+                            <option value="usuarios">👥 Reporte de Usuarios</option>
+                            <option value="vendedores">🏪 Reporte de Vendedores</option>
+                        </select>
+                        <div class="form-text">Selecciona el tipo de información que deseas incluir en el reporte</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar-range"></i> Período
+                        </label>
+                        <select class="form-select" name="tipo_fecha" id="tipoFecha" required>
+                            <option value="mes_actual">📅 Mes Actual</option>
+                            <option value="mes_anterior">📅 Mes Anterior</option>
+                            <option value="ultimo_trimestre">📅 Último Trimestre (3 meses)</option>
+                            <option value="personalizado">📅 Personalizado</option>
+                            <option value="todo">📅 Todo hasta la fecha</option>
+                        </select>
+                    </div>
+
+                    <div id="fechasPersonalizadas" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fecha Inicio</label>
+                                <input type="date" class="form-control" name="fecha_inicio" 
+                                       value="<?= date('Y-m-01') ?>" id="fechaInicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fecha Fin</label>
+                                <input type="date" class="form-control" name="fecha_fin" 
+                                       value="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d') ?>" id="fechaFin">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info small mb-0">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <strong>Nota:</strong> El reporte se generará en formato PDF y se descargará automáticamente. 
+                        Puede tardar unos segundos dependiendo de la cantidad de datos.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Generar PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoFechaSelect = document.getElementById('tipoFecha');
+    const fechasPersonalizadas = document.getElementById('fechasPersonalizadas');
+    const fechaInicio = document.getElementById('fechaInicio');
+    const fechaFin = document.getElementById('fechaFin');
+    
+    if(tipoFechaSelect) {
+        tipoFechaSelect.addEventListener('change', function() {
+            if(this.value === 'personalizado') {
+                fechasPersonalizadas.style.display = 'block';
+                fechaInicio.required = true;
+                fechaFin.required = true;
+            } else {
+                fechasPersonalizadas.style.display = 'none';
+                fechaInicio.required = false;
+                fechaFin.required = false;
+            }
+        });
+    }
+    
+    if(fechaFin) {
+        fechaFin.addEventListener('change', function() {
+            if(fechaInicio.value && fechaFin.value) {
+                if(new Date(fechaFin.value) < new Date(fechaInicio.value)) {
+                    alert('La fecha fin debe ser posterior a la fecha de inicio');
+                    fechaFin.value = fechaInicio.value;
+                }
+            }
+        });
+    }
+    
+    const formReporte = document.getElementById('formReporte');
+    if(formReporte) {
+        formReporte.addEventListener('submit', function(e) {
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando...';
+            
+            setTimeout(function() {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }, 3000);
+        });
+    }
+});
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
