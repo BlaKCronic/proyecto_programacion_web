@@ -4,7 +4,7 @@ define('DB_NAME', 'database');
 define('DB_USER', 'user');
 define('DB_PASS', 'password');
 
-define('BASE_URL', 'http://localhost');
+define('BASE_URL', 'http://localhost:8080/proyecto');
 define('IMG_PATH', __DIR__ . '/../img/');
 define('IMG_URL', BASE_URL . '/img/');
 
@@ -15,6 +15,9 @@ define('COMISION_PLATAFORMA', 0.15);
 define('COSTO_ENVIO_BASE', 99.00);
 define('ENVIO_GRATIS_DESDE', 500.00);
 define('IVA', 0.16);
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();

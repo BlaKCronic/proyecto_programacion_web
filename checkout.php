@@ -54,53 +54,160 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
         ];
         redirect('checkout.php?step=3');
     } elseif(isset($_POST['finalizar_pedido'])) {
-        $direccion_completa = $_SESSION['checkout_direccion']['direccion'] . ', ' .
-                            $_SESSION['checkout_direccion']['ciudad'] . ', ' .
-                            $_SESSION['checkout_direccion']['estado'] . ' ' .
-                            $_SESSION['checkout_direccion']['codigo_postal'];
-        
-        $data_pedido = [
-            'id_usuario' => $usuario_id,
-            'total' => $total,
-            'subtotal' => $subtotal,
-            'envio' => $envio,
-            'impuestos' => $impuestos,
-            'direccion_envio' => $direccion_completa,
-            'metodo_pago' => $_SESSION['checkout_pago']['metodo']
-        ];
-        
-        $id_pedido = $appPedido->create($data_pedido);
-        
-        if($id_pedido) {
-            foreach($items_carrito as $item) {
-                $precio_unitario = $item['precio_descuento'] ?? $item['precio'];
-                $subtotal_item = $precio_unitario * $item['cantidad'];
-                
-                $data_detalle = [
-                    'id_pedido' => $id_pedido,
-                    'id_producto' => $item['id_producto'],
-                    'id_vendedor' => $item['id_vendedor'],
-                    'cantidad' => $item['cantidad'],
-                    'precio_unitario' => $precio_unitario,
-                    'subtotal' => $subtotal_item
-                ];
-                
-                $appPedido->agregarDetalle($data_detalle);
-                
-                $appProducto->updateStock($item['id_producto'], $item['cantidad']);
+        if(isset($_SESSION['checkout_pago']['metodo']) && $_SESSION['checkout_pago']['metodo'] === 'paypal') {
+            require_once "config/paypal.php";
+            require_once "models/carrito.php";
+
+            try {
+                $appCarritoLocal = new Carrito();
+                $items_carrito = $appCarritoLocal->obtenerCarrito($usuario_id);
+
+                if(empty($items_carrito)) {
+                    throw new Exception('El carrito está vacío');
+                }
+
+                $subtotal_local = 0;
+                foreach($items_carrito as $item) {
+                    $precio = $item['precio_descuento'] ?? $item['precio'];
+                    $subtotal_local += $precio * $item['cantidad'];
+                }
+
+                $envio_local = $subtotal_local >= ENVIO_GRATIS_DESDE ? 0 : COSTO_ENVIO_BASE;
+                $impuestos_local = $subtotal_local * IVA;
+                $total_local = $subtotal_local + $envio_local + $impuestos_local;
+
+                $subtotal_usd = convertirMXNaUSD($subtotal_local);
+                $envio_usd = convertirMXNaUSD($envio_local);
+                $impuestos_usd = convertirMXNaUSD($impuestos_local);
+                $total_usd = convertirMXNaUSD($total_local);
+
+                $apiContext = getPayPalApiContext();
+
+                $payer = new \PayPal\Api\Payer();
+                $payer->setPaymentMethod('paypal');
+
+                $itemList = new \PayPal\Api\ItemList();
+                $paypal_items = [];
+
+                foreach($items_carrito as $item) {
+                    $precio_unitario = $item['precio_descuento'] ?? $item['precio'];
+                    $precio_usd = convertirMXNaUSD($precio_unitario);
+
+                    $paypal_item = new \PayPal\Api\Item();
+                    $paypal_item->setName(substr($item['nombre'], 0, 127))
+                        ->setCurrency('USD')
+                        ->setQuantity($item['cantidad'])
+                        ->setSku($item['id_producto'])
+                        ->setPrice(formatearPrecioPayPal($precio_usd));
+
+                    $paypal_items[] = $paypal_item;
+                }
+
+                $itemList->setItems($paypal_items);
+
+                $shippingAddress = new \PayPal\Api\ShippingAddress();
+                $shippingAddress->setLine1($_SESSION['checkout_direccion']['direccion'])
+                    ->setCity($_SESSION['checkout_direccion']['ciudad'])
+                    ->setState($_SESSION['checkout_direccion']['estado'])
+                    ->setPostalCode($_SESSION['checkout_direccion']['codigo_postal'])
+                    ->setCountryCode('MX');
+
+                $itemList->setShippingAddress($shippingAddress);
+
+                $details = new \PayPal\Api\Details();
+                $details->setShipping(formatearPrecioPayPal($envio_usd))
+                    ->setTax(formatearPrecioPayPal($impuestos_usd))
+                    ->setSubtotal(formatearPrecioPayPal($subtotal_usd));
+
+                $amount = new \PayPal\Api\Amount();
+                $amount->setCurrency('USD')
+                    ->setTotal(formatearPrecioPayPal($total_usd))
+                    ->setDetails($details);
+
+                $transaction = new \PayPal\Api\Transaction();
+                $transaction->setAmount($amount)
+                    ->setItemList($itemList)
+                    ->setDescription('Compra en Amazon Lite')
+                    ->setInvoiceNumber(uniqid('ALT-'));
+
+                $redirectUrls = new \PayPal\Api\RedirectUrls();
+                $redirectUrls->setReturnUrl(PAYPAL_RETURN_URL)
+                    ->setCancelUrl(PAYPAL_CANCEL_URL);
+
+                $payment = new \PayPal\Api\Payment();
+                $payment->setIntent('sale')
+                    ->setPayer($payer)
+                    ->setRedirectUrls($redirectUrls)
+                    ->setTransactions([$transaction]);
+
+                $payment->create($apiContext);
+
+                $_SESSION['paypal_payment_id'] = $payment->getId();
+                $_SESSION['paypal_total_mxn'] = $total_local;
+
+                $approvalUrl = $payment->getApprovalLink();
+
+                header('Location: ' . $approvalUrl);
+                exit();
+
+            } catch(\PayPal\Exception\PayPalConnectionException $ex) {
+                error_log('PayPal Connection Error: ' . $ex->getData());
+                $mensaje = 'Error de conexión con PayPal: ' . $ex->getMessage();
+                $tipo_mensaje = 'danger';
+            } catch(Exception $ex) {
+                error_log('PayPal Error: ' . $ex->getMessage());
+                $mensaje = 'Error al procesar el pago: ' . $ex->getMessage();
+                $tipo_mensaje = 'danger';
             }
-            
-            $appCarrito->vaciarCarrito($usuario_id);
-            $_SESSION['cart_count'] = 0;
-            
-            unset($_SESSION['checkout_direccion']);
-            unset($_SESSION['checkout_pago']);
-            
-            $_SESSION['ultimo_pedido'] = $id_pedido;
-            redirect('checkout.php?step=4');
         } else {
-            $mensaje = 'Error al procesar el pedido. Intenta nuevamente.';
-            $tipo_mensaje = 'danger';
+            $direccion_completa = $_SESSION['checkout_direccion']['direccion'] . ', ' .
+                                $_SESSION['checkout_direccion']['ciudad'] . ', ' .
+                                $_SESSION['checkout_direccion']['estado'] . ' ' .
+                                $_SESSION['checkout_direccion']['codigo_postal'];
+            
+            $data_pedido = [
+                'id_usuario' => $usuario_id,
+                'total' => $total,
+                'subtotal' => $subtotal,
+                'envio' => $envio,
+                'impuestos' => $impuestos,
+                'direccion_envio' => $direccion_completa,
+                'metodo_pago' => $_SESSION['checkout_pago']['metodo']
+            ];
+            
+            $id_pedido = $appPedido->create($data_pedido);
+            
+            if($id_pedido) {
+                foreach($items_carrito as $item) {
+                    $precio_unitario = $item['precio_descuento'] ?? $item['precio'];
+                    $subtotal_item = $precio_unitario * $item['cantidad'];
+                    
+                    $data_detalle = [
+                        'id_pedido' => $id_pedido,
+                        'id_producto' => $item['id_producto'],
+                        'id_vendedor' => $item['id_vendedor'],
+                        'cantidad' => $item['cantidad'],
+                        'precio_unitario' => $precio_unitario,
+                        'subtotal' => $subtotal_item
+                    ];
+                    
+                    $appPedido->agregarDetalle($data_detalle);
+                    
+                    $appProducto->updateStock($item['id_producto'], $item['cantidad']);
+                }
+                
+                $appCarrito->vaciarCarrito($usuario_id);
+                $_SESSION['cart_count'] = 0;
+                
+                unset($_SESSION['checkout_direccion']);
+                unset($_SESSION['checkout_pago']);
+                
+                $_SESSION['ultimo_pedido'] = $id_pedido;
+                redirect('checkout.php?step=4');
+            } else {
+                $mensaje = 'Error al procesar el pedido. Intenta nuevamente.';
+                $tipo_mensaje = 'danger';
+            }
         }
     }
 }

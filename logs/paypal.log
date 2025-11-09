@@ -1,0 +1,38 @@
+[09-11-2025 12:46:33] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/oauth2/token
+[09-11-2025 12:46:34] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 12:46:34] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 12:46:35] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 12:53:25] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 12:53:26] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 12:53:27] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 12:53:28] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 12:54:59] PayPal\Core\PayPalHttpConnection : INFO: GET https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEII5SA7PD878967A9715249
+[09-11-2025 12:55:00] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 12:55:00] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEII5SA7PD878967A9715249/execute
+[09-11-2025 12:55:01] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 12:55:59] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 12:56:00] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 12:56:03] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 12:56:04] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 12:56:58] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 12:56:59] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 12:57:21] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 12:57:22] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 12:57:28] PayPal\Core\PayPalHttpConnection : INFO: GET https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEII7MQ230603599N311103K
+[09-11-2025 12:57:29] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 12:57:29] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEII7MQ230603599N311103K/execute
+[09-11-2025 12:57:30] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 13:00:16] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 13:00:17] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 13:00:26] PayPal\Core\PayPalHttpConnection : INFO: GET https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEIJAYI6EK49041RU554035H
+[09-11-2025 13:00:26] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 13:00:27] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEIJAYI6EK49041RU554035H/execute
+[09-11-2025 13:00:28] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 13:01:50] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 13:01:51] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[09-11-2025 13:01:58] PayPal\Core\PayPalHttpConnection : INFO: GET https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEIJBPY8VY31339PG884204W
+[09-11-2025 13:01:59] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 13:01:59] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEIJBPY8VY31339PG884204W/execute
+[09-11-2025 13:02:00] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[09-11-2025 13:08:13] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[09-11-2025 13:08:14] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
