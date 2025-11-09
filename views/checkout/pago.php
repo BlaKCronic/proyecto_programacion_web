@@ -130,8 +130,18 @@
                                     <i class="bi bi-paypal fs-4 text-info"></i>
                                     <strong class="ms-2">PayPal</strong>
                                 </div>
+                                <div>
+                                    <img src="https://www.paypalobjects.com/webstatic/mktg/logo/AM_mc_vs_dc_ae.jpg" 
+                                         alt="PayPal" height="30">
+                                </div>
                             </div>
                         </label>
+                    </div>
+                    <div id="datosPayPal" class="mt-3" style="display: none;">
+                        <div class="alert alert-info small">
+                            <i class="bi bi-info-circle-fill"></i>
+                            Serás redirigido a PayPal para completar el pago de forma segura.
+                        </div>
                     </div>
                 </div>
             </div>
