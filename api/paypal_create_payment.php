@@ -67,7 +67,7 @@ try {
         $precio_usd = convertirMXNaUSD($precio_unitario);
         
         $paypal_item = new Item();
-        $paypal_item->setName(substr($item['nombre'], 0, 127)) // PayPal límite 127 caracteres
+        $paypal_item->setName(substr($item['nombre'], 0, 127))
             ->setCurrency('USD')
             ->setQuantity($item['cantidad'])
             ->setSku($item['id_producto'])
