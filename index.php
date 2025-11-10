@@ -1,7 +1,13 @@
 <?php
+session_start();
 require_once "config/config.php";
 require_once "models/producto.php";
 require_once "models/categoria.php";
+
+error_log("Index - Estado de la sesión:");
+error_log("Session ID: " . session_id());
+error_log("Usuario ID: " . ($_SESSION['usuario_id'] ?? 'no establecido'));
+error_log("Usuario Nombre: " . ($_SESSION['usuario_nombre'] ?? 'no establecido'));
 
 $appProducto = new Producto();
 $appCategoria = new Categoria();

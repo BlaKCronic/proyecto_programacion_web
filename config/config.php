@@ -58,8 +58,16 @@ function obtenerVendedorActual() {
 }
 
 function redirect($url) {
-    header("Location: $url");
-    exit();
+    error_log("Redirigiendo a: " . $url);
+    if(!headers_sent($file, $line)) {
+        header("Location: $url");
+        exit();
+    } else {
+        error_log("Headers ya enviados en $file:$line");
+        echo "<script>window.location.href='$url';</script>";
+        echo "<noscript><meta http-equiv='refresh' content='0;url=$url'></noscript>";
+        exit();
+    }
 }
 
 function mostrarAlerta($mensaje, $tipo = 'info') {

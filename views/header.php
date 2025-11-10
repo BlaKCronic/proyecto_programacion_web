@@ -3,7 +3,14 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+error_log("Header - Verificación de sesión:");
+error_log("Session ID: " . session_id());
+error_log("Session Status: " . session_status());
+error_log("Usuario ID en sesión: " . ($_SESSION['usuario_id'] ?? 'no establecido'));
+
 $isLoggedIn = !empty($_SESSION['usuario_id']);
+error_log("¿Está logueado?: " . ($isLoggedIn ? 'Sí' : 'No'));
+
 $userName = $isLoggedIn ? (string) ($_SESSION['usuario_nombre'] ?? 'Usuario') : 'Invitado';
 $cartCount = $isLoggedIn ? (int) ($_SESSION['cart_count'] ?? 0) : 0;
 

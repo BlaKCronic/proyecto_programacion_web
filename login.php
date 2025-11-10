@@ -1,8 +1,11 @@
 <?php
+session_start();
 require_once "config/config.php";
 require_once "models/usuario.php";
 require_once "models/sistema.php";
 require_once "models/Validator.php";
+
+error_log("Iniciando proceso de login - Sesión ID: " . session_id());
 
 $app = new Usuario();
 $sistema = new Sistema();
@@ -16,15 +19,26 @@ if(estaLogueado()) {
 
 $vista = isset($_GET['vista']) ? $_GET['vista'] : 'login';
 
-if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
+if($_SERVER['REQUEST_METHOD'] == 'POST') {
+    error_log("POST recibida en login.php: " . json_encode($_POST));
+    if(isset($_POST['login'])) {
+        error_log("Intento de login iniciado");
     $datos = [
         'email' => $_POST['email'] ?? '',
         'password' => $_POST['password'] ?? ''
     ];
+    error_log("Datos recibidos - Email: " . $datos['email']);
     
-    $validacion = ValidatorHelper::validarLogin($datos);
+    try {
+        $validacion = ValidatorHelper::validarLogin($datos);
+        error_log("Resultado validación: " . ($validacion['valido'] ? 'válido' : 'inválido'));
+    } catch(\Exception $e) {
+        error_log("Excepción en validarLogin: " . $e->getMessage());
+        $validacion = ['valido' => true, 'errores' => []];
+    }
     
     if(!$validacion['valido']) {
+        error_log("Validación fallida");
         $tipo_mensaje = 'danger';
     } else {
         $email = $app->sanitizar($datos['email']);
@@ -33,6 +47,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
         $usuario = $app->login($email, $password);
         
         if($usuario) {
+            error_log("Usuario autenticado correctamente. ID: " . $usuario['id_usuario']);
             $_SESSION['usuario_id'] = $usuario['id_usuario'];
             $_SESSION['usuario_nombre'] = $usuario['nombre'];
             $_SESSION['usuario_apellido'] = $usuario['apellido'];
@@ -42,12 +57,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             $carrito = new Carrito();
             $_SESSION['cart_count'] = $carrito->contarItems($usuario['id_usuario']);
             
-            redirect('index.php');
+            error_log("Sesión iniciada. Redirigiendo a index.php (prueba temporal con JS)");
+            error_log("Estado de la sesión - ID: " . $_SESSION['usuario_id'] . ", Nombre: " . $_SESSION['usuario_nombre']);
+            echo "<script>window.location.href='index.php';</script>";
+            echo "<noscript><meta http-equiv='refresh' content='0;url=index.php'></noscript>";
+            exit();
         } else {
             $mensaje = 'Email o contraseña incorrectos';
             $tipo_mensaje = 'danger';
         }
     }
+}
+
 }
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['solicitar_recuperacion'])) {
