@@ -6,46 +6,18 @@ use Valitron\Validator;
 class ValidatorHelper {
 
     public static function configurarMensajesEspanol() {
-        Validator::langDir(__DIR__ . '/lang');
-        Validator::lang('es');
-        
-        $mensajes = [
-            'required'      => 'El campo %s es requerido',
-            'equals'        => '%s debe ser igual a %s',
-            'different'     => '%s debe ser diferente de %s',
-            'accepted'      => '%s debe ser aceptado',
-            'numeric'       => '%s debe ser numérico',
-            'integer'       => '%s debe ser un número entero',
-            'length'        => '%s debe tener exactamente %d caracteres',
-            'min'           => '%s debe tener al menos %d caracteres',
-            'max'           => '%s debe tener máximo %d caracteres',
-            'in'            => '%s contiene un valor inválido',
-            'notIn'         => '%s contiene un valor inválido',
-            'ip'            => '%s no es una dirección IP válida',
-            'email'         => '%s no es un email válido',
-            'url'           => '%s no es una URL válida',
-            'urlActive'     => '%s debe ser un dominio activo',
-            'alpha'         => '%s solo puede contener letras',
-            'alphaNum'      => '%s solo puede contener letras y números',
-            'slug'          => '%s solo puede contener letras, números, guiones y guiones bajos',
-            'regex'         => '%s contiene caracteres inválidos',
-            'date'          => '%s no es una fecha válida',
-            'dateFormat'    => '%s debe tener el formato %s',
-            'dateBefore'    => '%s debe ser una fecha anterior a %s',
-            'dateAfter'     => '%s debe ser una fecha posterior a %s',
-            'contains'      => '%s debe contener %s',
-            'subset'        => '%s contiene un elemento no permitido',
-            'containsUnique' => '%s contiene elementos duplicados',
-            'creditCard'    => '%s no es un número de tarjeta válido',
-            'lengthBetween' => '%s debe tener entre %d y %d caracteres',
-            'lengthMin'     => '%s debe tener al menos %d caracteres',
-            'lengthMax'     => '%s debe tener máximo %d caracteres',
-            'instanceOf'    => '%s debe ser una instancia de %s'
-        ];
-        
-        foreach($mensajes as $regla => $mensaje) {
-            Validator::addRule($regla, function() {}, $mensaje);
+        try {
+            $langDir = __DIR__ . '/lang';
+            if(is_dir($langDir)) {
+                Validator::langDir($langDir);
+                if(file_exists($langDir . '/es.php')) {
+                    Validator::lang('es');
+                }
+            }
+        } catch(\Exception $e) {
+            error_log("Warning: no se pudo configurar mensajes en español para Valitron: " . $e->getMessage());
         }
+        
     }
     
     public static function validarRegistroUsuario($datos) {
@@ -160,6 +132,11 @@ class ValidatorHelper {
         self::configurarMensajesEspanol();
         
         $v = new Validator($datos);
+
+        $v->labels([
+            'email' => 'Correo electrónico',
+            'password' => 'Contraseña'
+        ]);
         
         $v->rule('required', ['email', 'password']);
         $v->rule('email', 'email');

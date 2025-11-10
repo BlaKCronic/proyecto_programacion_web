@@ -20,55 +20,62 @@ if(estaLogueado()) {
 $vista = isset($_GET['vista']) ? $_GET['vista'] : 'login';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
-    error_log("POST recibida en login.php: " . json_encode($_POST));
     if(isset($_POST['login'])) {
         error_log("Intento de login iniciado");
-    $datos = [
-        'email' => $_POST['email'] ?? '',
-        'password' => $_POST['password'] ?? ''
-    ];
-    error_log("Datos recibidos - Email: " . $datos['email']);
-    
-    try {
+        
+        $datos = [
+            'email' => $_POST['email'] ?? '',
+            'password' => $_POST['password'] ?? ''
+        ];
+        
+        error_log("Datos recibidos - Email: " . $datos['email']);
+        
         $validacion = ValidatorHelper::validarLogin($datos);
         error_log("Resultado validación: " . ($validacion['valido'] ? 'válido' : 'inválido'));
-    } catch(\Exception $e) {
-        error_log("Excepción en validarLogin: " . $e->getMessage());
-        $validacion = ['valido' => true, 'errores' => []];
-    }
-    
-    if(!$validacion['valido']) {
-        error_log("Validación fallida");
-        $tipo_mensaje = 'danger';
-    } else {
-        $email = $app->sanitizar($datos['email']);
-        $password = $datos['password'];
         
-        $usuario = $app->login($email, $password);
-        
-        if($usuario) {
-            error_log("Usuario autenticado correctamente. ID: " . $usuario['id_usuario']);
-            $_SESSION['usuario_id'] = $usuario['id_usuario'];
-            $_SESSION['usuario_nombre'] = $usuario['nombre'];
-            $_SESSION['usuario_apellido'] = $usuario['apellido'];
-            $_SESSION['usuario_email'] = $usuario['email'];
-            
-            require_once "models/carrito.php";
-            $carrito = new Carrito();
-            $_SESSION['cart_count'] = $carrito->contarItems($usuario['id_usuario']);
-            
-            error_log("Sesión iniciada. Redirigiendo a index.php (prueba temporal con JS)");
-            error_log("Estado de la sesión - ID: " . $_SESSION['usuario_id'] . ", Nombre: " . $_SESSION['usuario_nombre']);
-            echo "<script>window.location.href='index.php';</script>";
-            echo "<noscript><meta http-equiv='refresh' content='0;url=index.php'></noscript>";
-            exit();
-        } else {
-            $mensaje = 'Email o contraseña incorrectos';
+        if(!$validacion['valido']) {
+            error_log("Validación fallida: " . json_encode($validacion['errores']));
             $tipo_mensaje = 'danger';
+        } else {
+            $email = $app->sanitizar($datos['email']);
+            $password = $datos['password'];
+
+            error_log("Sanitized email: " . $email);
+            error_log("Password length: " . strlen($password));
+            try {
+                $exists = $app->emailExists($email);
+                error_log("emailExists: " . ($exists ? 'sí' : 'no'));
+            } catch (\Exception $e) {
+                error_log("Error comprobando existencia de email: " . $e->getMessage());
+            }
+
+            error_log("Intentando autenticar usuario: " . $email);
+            $usuario = $app->login($email, $password);
+            
+            if($usuario) {
+                error_log("Usuario autenticado correctamente. ID: " . $usuario['id_usuario']);
+                
+                $_SESSION['usuario_id'] = $usuario['id_usuario'];
+                $_SESSION['usuario_nombre'] = $usuario['nombre'];
+                $_SESSION['usuario_apellido'] = $usuario['apellido'];
+                $_SESSION['usuario_email'] = $usuario['email'];
+                
+                require_once "models/carrito.php";
+                $carrito = new Carrito();
+                $_SESSION['cart_count'] = $carrito->contarItems($usuario['id_usuario']);
+                
+                error_log("Sesión iniciada correctamente");
+                error_log("Redirigiendo a index.php");
+                
+                header("Location: index.php");
+                exit();
+            } else {
+                error_log("Credenciales incorrectas");
+                $mensaje = 'Email o contraseña incorrectos';
+                $tipo_mensaje = 'danger';
+            }
         }
     }
-}
-
 }
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['solicitar_recuperacion'])) {
@@ -116,10 +123,11 @@ include_once "views/header.php";
 
                     <?php if($vista == 'login'): ?>
                         <form method="POST" action="login.php" id="formLogin">
+                            <input type="hidden" name="login" value="1">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="email" 
-                                       class="form-control <?= isset($validacion) ? ValidatorHelper::claseError($validacion['errores'], 'email') : '' ?>" 
+                                       class="form-control <?= isset($validacion) && !$validacion['valido'] ? ValidatorHelper::claseError($validacion['errores'], 'email') : '' ?>" 
                                        id="email" 
                                        name="email" 
                                        placeholder="tu@email.com"
@@ -138,7 +146,7 @@ include_once "views/header.php";
                                 <label for="password" class="form-label">Contraseña</label>
                                 <div class="input-group">
                                     <input type="password" 
-                                           class="form-control <?= isset($validacion) ? ValidatorHelper::claseError($validacion['errores'], 'password') : '' ?>" 
+                                           class="form-control <?= isset($validacion) && !$validacion['valido'] ? ValidatorHelper::claseError($validacion['errores'], 'password') : '' ?>" 
                                            id="password" 
                                            name="password" 
                                            placeholder="Tu contraseña" 
@@ -444,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 btnLogin.disabled = false;
                 btnLogin.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Iniciar sesión';
-            }, 3000);
+            }, 5000);
         });
     }
     
@@ -478,10 +486,6 @@ document.addEventListener('DOMContentLoaded', function() {
         primerError.focus();
     }
 });
-
-if(!document.querySelector('link[href*="bootstrap"]')) {
-    console.warn('Bootstrap CSS no detectado');
-}
 </script>
 
 <?php include_once "views/footer.php"; ?>
