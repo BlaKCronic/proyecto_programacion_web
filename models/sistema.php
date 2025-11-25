@@ -248,7 +248,7 @@ class Sistema {
         $mail->SMTPAuth = true;
         
         $mail->Username = '22030935@itcelaya.edu.mx';
-        $mail->Password = '3H2ULu9Z5a3FLsT7Q23ijg';
+        $mail->Password = '';
         
         $mail->setFrom('22030935@itcelaya.edu.mx', 'Amazon Lite');
         $mail->addAddress($para, $nombre ? $nombre : 'Cliente');
