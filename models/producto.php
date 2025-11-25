@@ -227,5 +227,25 @@ class Producto extends Sistema {
         }
         return !empty($imagenes) ? implode(',', $imagenes) : null;
     }
+
+    function saveImagenPrincipalBase64($id_producto, $dataUrl) {
+        $this->conect();
+        $sql = "UPDATE productos SET imagen_principal = :dataUrl WHERE id_producto = :id_producto";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(':dataUrl', $dataUrl, PDO::PARAM_STR);
+        $sth->bindParam(':id_producto', $id_producto, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->rowCount();
+    }
+
+    function saveImagenesAdicionalesBase64($id_producto, $jsonData) {
+        $this->conect();
+        $sql = "UPDATE productos SET imagenes_adicionales = :jsonData WHERE id_producto = :id_producto";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(':jsonData', $jsonData, PDO::PARAM_STR);
+        $sth->bindParam(':id_producto', $id_producto, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->rowCount();
+    }
 }
 ?>

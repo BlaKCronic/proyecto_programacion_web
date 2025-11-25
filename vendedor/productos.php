@@ -43,8 +43,38 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
             $tipo_mensaje = 'danger';
             $action = 'create';
         } else {
-            $data['imagen_principal'] = $appProducto->cargarImagen('imagen_principal', 'productos');
-            $data['imagenes_adicionales'] = $appProducto->cargarImagenesAdicionales('productos');
+            function file_to_data_url_local($tmpPath) {
+                $data = file_get_contents($tmpPath);
+                if($data === false) return null;
+                $mime = mime_content_type($tmpPath);
+                $b64 = base64_encode($data);
+                return "data:$mime;base64,$b64";
+            }
+
+            $data['imagen_principal'] = null;
+            if(isset($_FILES['imagen_principal']) && $_FILES['imagen_principal']['error'] === 0) {
+                $dataUrl = file_to_data_url_local($_FILES['imagen_principal']['tmp_name']);
+                if($dataUrl) $data['imagen_principal'] = $dataUrl;
+                $ext = pathinfo($_FILES['imagen_principal']['name'], PATHINFO_EXTENSION);
+                $newname = uniqid() . '.' . $ext;
+                @move_uploaded_file($_FILES['imagen_principal']['tmp_name'], __DIR__ . '/../img/productos/' . $newname);
+            }
+
+            $data['imagenes_adicionales'] = null;
+            if(isset($_FILES['imagenes_adicionales'])) {
+                $count = count($_FILES['imagenes_adicionales']['name']);
+                $arr = [];
+                for($i=0;$i<$count;$i++) {
+                    if($_FILES['imagenes_adicionales']['error'][$i] !== 0) continue;
+                    $tmp = $_FILES['imagenes_adicionales']['tmp_name'][$i];
+                    $dataUrl = file_to_data_url_local($tmp);
+                    if($dataUrl) $arr[] = $dataUrl;
+                    $ext = pathinfo($_FILES['imagenes_adicionales']['name'][$i], PATHINFO_EXTENSION);
+                    $newname = uniqid() . '.' . $ext;
+                    @move_uploaded_file($tmp, __DIR__ . '/../img/productos/' . $newname);
+                }
+                if(!empty($arr)) $data['imagenes_adicionales'] = json_encode($arr);
+            }
 
             if($data['imagen_principal']) {
                 $id_producto = $appProducto->create($data);
@@ -87,11 +117,44 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $tipo_mensaje = 'danger';
                 $action = 'edit';
             } else {
-                $nueva_imagen = $appProducto->cargarImagen('imagen_principal', 'productos');
-                $data['imagen_principal'] = $nueva_imagen ? $nueva_imagen : $producto_actual['imagen_principal'];
+                function file_to_data_url_local($tmpPath) {
+                    $dataf = file_get_contents($tmpPath);
+                    if($dataf === false) return null;
+                    $mime = mime_content_type($tmpPath);
+                    $b64 = base64_encode($dataf);
+                    return "data:$mime;base64,$b64";
+                }
 
-                $nuevas_imagenes = $appProducto->cargarImagenesAdicionales('productos');
-                $data['imagenes_adicionales'] = $nuevas_imagenes ? $nuevas_imagenes : $producto_actual['imagenes_adicionales'];
+                if(isset($_FILES['imagen_principal']) && $_FILES['imagen_principal']['error'] === 0) {
+                    $durl = file_to_data_url_local($_FILES['imagen_principal']['tmp_name']);
+                    if($durl) {
+                        $data['imagen_principal'] = $durl;
+                        $ext = pathinfo($_FILES['imagen_principal']['name'], PATHINFO_EXTENSION);
+                        $newname = uniqid() . '.' . $ext;
+                        @move_uploaded_file($_FILES['imagen_principal']['tmp_name'], __DIR__ . '/../img/productos/' . $newname);
+                    } else {
+                        $data['imagen_principal'] = $producto_actual['imagen_principal'];
+                    }
+                } else {
+                    $data['imagen_principal'] = $producto_actual['imagen_principal'];
+                }
+
+                if(isset($_FILES['imagenes_adicionales'])) {
+                    $count = count($_FILES['imagenes_adicionales']['name']);
+                    $arr = [];
+                    for($i=0;$i<$count;$i++) {
+                        if($_FILES['imagenes_adicionales']['error'][$i] !== 0) continue;
+                        $tmp = $_FILES['imagenes_adicionales']['tmp_name'][$i];
+                        $dataUrl = file_to_data_url_local($tmp);
+                        if($dataUrl) $arr[] = $dataUrl;
+                        $ext = pathinfo($_FILES['imagenes_adicionales']['name'][$i], PATHINFO_EXTENSION);
+                        $newname = uniqid() . '.' . $ext;
+                        @move_uploaded_file($tmp, __DIR__ . '/../img/productos/' . $newname);
+                    }
+                    $data['imagenes_adicionales'] = !empty($arr) ? json_encode($arr) : $producto_actual['imagenes_adicionales'];
+                } else {
+                    $data['imagenes_adicionales'] = $producto_actual['imagenes_adicionales'];
+                }
 
                 $filas = $appProducto->update($data, $id_producto);
                 $mensaje = 'Producto actualizado exitosamente';
@@ -197,9 +260,14 @@ include_once "views/header.php";
                                         <?php foreach($productos as $producto): ?>
                                             <tr>
                                                 <td>
-                                                    <?php if($producto['imagen_principal']): ?>
-                                                        <img src="../img/productos/<?= $producto['imagen_principal'] ?>" 
-                                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                                    <?php if(!empty($producto['imagen_principal'])): ?>
+                                                        <?php if(strpos($producto['imagen_principal'], 'data:') === 0): ?>
+                                                            <img src="<?= $producto['imagen_principal'] ?>" 
+                                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                                        <?php else: ?>
+                                                            <img src="../img/productos/<?= $producto['imagen_principal'] ?>" 
+                                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                                        <?php endif; ?>
                                                     <?php else: ?>
                                                         <div class="bg-light d-flex align-items-center justify-content-center" 
                                                              style="width: 50px; height: 50px;">
@@ -408,8 +476,22 @@ include_once "views/header.php";
                                         </label>
                                         <?php if($producto && $producto['imagen_principal']): ?>
                                             <div class="mb-2">
-                                                <img src="../img/productos/<?= $producto['imagen_principal'] ?>" 
-                                                     class="img-fluid rounded" alt="Imagen actual">
+                                                <?php
+                                                    $rp = null;
+                                                    $val = $producto['imagen_principal'];
+                                                    if(strpos($val, 'data:') === 0) {
+                                                        $rp = $val;
+                                                    } else {
+                                                        $rp = '../img/productos/' . $val;
+                                                    }
+                                                ?>
+                                                <?php if(!empty($rp)): ?>
+                                                    <img src="<?= $rp ?>" class="img-fluid rounded" alt="Imagen actual">
+                                                <?php else: ?>
+                                                    <div class="bg-light d-flex align-items-center justify-content-center" style="width:100%; height:120px;">
+                                                        <i class="bi bi-image fs-3 text-muted"></i>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                         <?php endif; ?>
                                         <input type="file" class="form-control" id="imagen_principal" name="imagen_principal" 

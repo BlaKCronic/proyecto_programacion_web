@@ -136,8 +136,25 @@ include_once "views/header.php";
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="../img/productos/<?= $detalle['imagen_principal'] ?>" 
-                                                     class="me-2" style="width: 50px; height: 50px; object-fit: contain;">
+                                                <?php
+                                                    $rp = null;
+                                                    if(!empty($detalle['imagen_principal'])) {
+                                                        $val = $detalle['imagen_principal'];
+                                                        if(strpos($val, 'data:') === 0) {
+                                                            $rp = $val;
+                                                        } else {
+                                                            $rp = '../img/productos/' . $val;
+                                                        }
+                                                    }
+                                                ?>
+                                                <?php if(!empty($rp)): ?>
+                                                    <img src="<?= $rp ?>" class="me-2" style="width: 50px; height: 50px; object-fit: contain;">
+                                                <?php else: ?>
+                                                    <div class="bg-light d-flex align-items-center justify-content-center me-2" 
+                                                         style="width:50px; height:50px;">
+                                                        <i class="bi bi-image fs-4 text-muted"></i>
+                                                    </div>
+                                                <?php endif; ?>
                                                 <div>
                                                     <?= htmlspecialchars($detalle['producto']) ?>
                                                 </div>

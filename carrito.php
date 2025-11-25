@@ -66,10 +66,25 @@ include_once "views/header.php";
                                 <div class="row border-bottom py-3 align-items-center">
                                     <div class="col-md-2 col-3">
                                         <a href="producto_detalle.php?id=<?= $item['id_producto'] ?>">
-                                            <?php if($item['imagen_principal']): ?>
-                                                <img src="img/productos/<?= $item['imagen_principal'] ?>" 
-                                                     class="img-fluid" alt="<?= htmlspecialchars($item['nombre']) ?>">
-                                            <?php else: ?>
+                                                    <?php if($item['imagen_principal']): ?>
+                                                        <?php
+                                                            $rp = null;
+                                                            $val = $item['imagen_principal'];
+                                                            if(strpos($val, 'data:') === 0) {
+                                                                $rp = $val;
+                                                            } else {
+                                                                $rp = 'img/productos/' . $val;
+                                                            }
+                                                        ?>
+                                                        <?php if(!empty($rp)): ?>
+                                                            <img src="<?= $rp ?>" class="img-fluid" alt="<?= htmlspecialchars($item['nombre']) ?>">
+                                                        <?php else: ?>
+                                                            <div class="bg-light d-flex align-items-center justify-content-center" 
+                                                                 style="height: 100px;">
+                                                                <i class="bi bi-image fs-3 text-muted"></i>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
                                                 <div class="bg-light d-flex align-items-center justify-content-center" 
                                                      style="height: 100px;">
                                                     <i class="bi bi-image fs-3 text-muted"></i>

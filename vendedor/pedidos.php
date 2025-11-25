@@ -84,8 +84,24 @@ include_once "views/header.php";
                                         <div class="card-body">
                                             <div class="row">
                                                 <div class="col-md-2">
-                                                    <img src="../img/productos/<?= $detalle['imagen_principal'] ?>" 
-                                                         class="img-fluid" alt="<?= htmlspecialchars($detalle['producto']) ?>">
+                                                    <?php
+                                                        $rp = null;
+                                                        if(!empty($detalle['imagen_principal'])) {
+                                                            $val = $detalle['imagen_principal'];
+                                                            if(strpos($val, 'data:') === 0) {
+                                                                $rp = $val;
+                                                            } else {
+                                                                $rp = '../img/productos/' . $val;
+                                                            }
+                                                        }
+                                                    ?>
+                                                    <?php if(!empty($rp)): ?>
+                                                        <img src="<?= $rp ?>" class="img-fluid" alt="<?= htmlspecialchars($detalle['producto']) ?>">
+                                                    <?php else: ?>
+                                                        <div class="bg-light d-flex align-items-center justify-content-center" style="height:100%;">
+                                                            <i class="bi bi-image fs-3 text-muted"></i>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <h6 class="fw-bold"><?= htmlspecialchars($detalle['producto']) ?></h6>

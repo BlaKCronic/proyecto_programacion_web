@@ -147,9 +147,26 @@ if($id_pedido) {
                 <div class="col-lg-3 col-md-6">
                     <div class="card h-100 border hover-lift">
                         <a href="producto_detalle.php?id=<?= $prod['id_producto'] ?>">
-                            <img src="img/productos/<?= $prod['imagen_principal'] ?>" 
-                                 class="card-img-top p-3" alt="<?= htmlspecialchars($prod['nombre']) ?>"
-                                 style="height: 150px; object-fit: contain;">
+                            <?php
+                                $rp = null;
+                                if(!empty($prod['imagen_principal'])) {
+                                    $val = $prod['imagen_principal'];
+                                    if(strpos($val, 'data:') === 0) {
+                                        $rp = $val;
+                                    } else {
+                                        $rp = 'img/productos/' . $val;
+                                    }
+                                }
+                            ?>
+                            <?php if(!empty($rp)): ?>
+                                <img src="<?= $rp ?>" 
+                                     class="card-img-top p-3" alt="<?= htmlspecialchars($prod['nombre']) ?>"
+                                     style="height: 150px; object-fit: contain;">
+                            <?php else: ?>
+                                <div class="bg-light p-3" style="height:150px; display:flex; align-items:center; justify-content:center;">
+                                    <i class="bi bi-image fs-2 text-muted"></i>
+                                </div>
+                            <?php endif; ?>
                         </a>
                         <div class="card-body">
                             <h6 class="card-title" style="height: 40px; overflow: hidden;">

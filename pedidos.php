@@ -182,9 +182,26 @@ include_once "views/header.php";
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <img src="img/productos/<?= $detalle['imagen_principal'] ?>" 
-                                                         class="me-3" style="width: 60px; height: 60px; object-fit: contain;"
-                                                         alt="<?= htmlspecialchars($detalle['producto']) ?>">
+                                                    <?php
+                                                        $rp = null;
+                                                        if(!empty($detalle['imagen_principal'])) {
+                                                            $val = $detalle['imagen_principal'];
+                                                            if(strpos($val, 'data:') === 0) {
+                                                                $rp = $val;
+                                                            } else {
+                                                                $rp = 'img/productos/' . $val;
+                                                            }
+                                                        }
+                                                    ?>
+                                                    <?php if(!empty($rp)): ?>
+                                                        <img src="<?= $rp ?>" class="me-3" style="width: 60px; height: 60px; object-fit: contain;"
+                                                             alt="<?= htmlspecialchars($detalle['producto']) ?>">
+                                                    <?php else: ?>
+                                                        <div class="bg-light d-flex align-items-center justify-content-center me-3" 
+                                                             style="width:60px; height:60px;">
+                                                            <i class="bi bi-image fs-4 text-muted"></i>
+                                                        </div>
+                                                    <?php endif; ?>
                                                     <div>
                                                         <a href="producto_detalle.php?id=<?= $detalle['id_producto'] ?>" 
                                                            class="text-decoration-none text-dark fw-bold">

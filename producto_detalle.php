@@ -29,10 +29,38 @@ $productos_relacionados = array_filter($productos_relacionados, function($p) use
     return $p['id_producto'] != $id;
 });
 $productos_relacionados = array_slice($productos_relacionados, 0, 4);
+$principalSrc = null;
+if(!empty($producto['imagen_principal'])) {
+    $val = $producto['imagen_principal'];
+    if(strpos($val, 'data:') === 0) {
+        $principalSrc = $val;
+    } else {
+        $principalSrc = 'img/productos/' . $val;
+    }
+}
 
-$imagenes_adicionales = [];
-if($producto['imagenes_adicionales']) {
-    $imagenes_adicionales = explode(',', $producto['imagenes_adicionales']);
+$imagenes_adicionales_arr = [];
+if(!empty($producto['imagenes_adicionales'])) {
+    $raw = trim($producto['imagenes_adicionales']);
+    $arr = null;
+    if(strlen($raw) > 0 && $raw[0] === '[') {
+        $arr = json_decode($raw, true);
+    }
+
+    if(is_array($arr)) {
+        foreach($arr as $item) {
+            if(strpos($item, 'data:') === 0) {
+                $imagenes_adicionales_arr[] = $item;
+            } else {
+                $imagenes_adicionales_arr[] = 'img/productos/' . $item;
+            }
+        }
+    } else {
+        $files = array_filter(array_map('trim', explode(',', $raw)));
+        foreach($files as $f) {
+            if($f !== '') $imagenes_adicionales_arr[] = 'img/productos/' . $f;
+        }
+    }
 }
 
 $pageTitle = htmlspecialchars($producto['nombre']) . ' - Amazon Lite';
@@ -56,8 +84,8 @@ include_once "views/header.php";
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
                     <div class="text-center mb-3" id="imagenPrincipal">
-                        <?php if($producto['imagen_principal']): ?>
-                            <img src="img/productos/<?= $producto['imagen_principal'] ?>" 
+                        <?php if(!empty($principalSrc)): ?>
+                            <img src="<?= $principalSrc ?>" 
                                  class="img-fluid" alt="<?= htmlspecialchars($producto['nombre']) ?>"
                                  style="max-height: 400px; object-fit: contain;">
                         <?php else: ?>
@@ -67,16 +95,19 @@ include_once "views/header.php";
                             </div>
                         <?php endif; ?>
                     </div>
-                    
-                    <?php if(!empty($imagenes_adicionales)): ?>
+
+                    <?php if(!empty($principalSrc) || !empty($imagenes_adicionales_arr)): ?>
                         <div class="d-flex justify-content-center gap-2">
-                            <div class="miniatura-img active" onclick="cambiarImagen('img/productos/<?= $producto['imagen_principal'] ?>')">
-                                <img src="img/productos/<?= $producto['imagen_principal'] ?>" 
-                                     class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;">
-                            </div>
-                            <?php foreach($imagenes_adicionales as $img): ?>
-                                <div class="miniatura-img" onclick="cambiarImagen('img/productos/<?= trim($img) ?>')">
-                                    <img src="img/productos/<?= trim($img) ?>" 
+                            <?php if(!empty($principalSrc)): ?>
+                                <div class="miniatura-img active" onclick="cambiarImagen('<?= $principalSrc ?>')">
+                                    <img src="<?= $principalSrc ?>" 
+                                         class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;">
+                                </div>
+                            <?php endif; ?>
+
+                            <?php foreach($imagenes_adicionales_arr as $src): ?>
+                                <div class="miniatura-img" onclick="cambiarImagen('<?= $src ?>')">
+                                    <img src="<?= $src ?>" 
                                          class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;">
                                 </div>
                             <?php endforeach; ?>
@@ -371,8 +402,18 @@ include_once "views/header.php";
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="card h-100 border-0 shadow-sm hover-lift">
                             <a href="producto_detalle.php?id=<?= $prod['id_producto'] ?>" class="text-decoration-none">
-                                <?php if($prod['imagen_principal']): ?>
-                                    <img src="img/productos/<?= $prod['imagen_principal'] ?>" 
+                                <?php
+                                    $rp = null;
+                                    if(!empty($prod['imagen_principal'])) {
+                                        if(strpos($prod['imagen_principal'], 'data:') === 0) {
+                                            $rp = $prod['imagen_principal'];
+                                        } else {
+                                            $rp = 'img/productos/' . $prod['imagen_principal'];
+                                        }
+                                    }
+                                ?>
+                                <?php if(!empty($rp)): ?>
+                                    <img src="<?= $rp ?>" 
                                          class="card-img-top p-3" alt="<?= htmlspecialchars($prod['nombre']) ?>"
                                          style="height: 200px; object-fit: contain;">
                                 <?php else: ?>

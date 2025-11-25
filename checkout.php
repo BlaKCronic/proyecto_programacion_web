@@ -299,9 +299,26 @@ include_once "views/header.php";
                             $subtotal_item = $precio_unitario * $item['cantidad'];
                             ?>
                             <div class="d-flex mb-3">
-                                <img src="img/productos/<?= $item['imagen_principal'] ?>" 
-                                     class="me-2" style="width: 60px; height: 60px; object-fit: contain;"
-                                     alt="<?= htmlspecialchars($item['nombre']) ?>">
+                                <?php
+                                    $rp = null;
+                                    if(!empty($item['imagen_principal'])) {
+                                        $val = $item['imagen_principal'];
+                                        if(strpos($val, 'data:') === 0) {
+                                            $rp = $val;
+                                        } else {
+                                            $rp = 'img/productos/' . $val;
+                                        }
+                                    }
+                                ?>
+                                <?php if(!empty($rp)): ?>
+                                    <img src="<?= $rp ?>" class="me-2" style="width: 60px; height: 60px; object-fit: contain;"
+                                         alt="<?= htmlspecialchars($item['nombre']) ?>">
+                                <?php else: ?>
+                                    <div class="bg-light d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="bi bi-image fs-4 text-muted"></i>
+                                    </div>
+                                <?php endif; ?>
                                 <div class="flex-fill">
                                     <div class="small mb-1">
                                         <?= htmlspecialchars(substr($item['nombre'], 0, 40)) ?>

@@ -62,9 +62,27 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="img/productos/<?= $item['imagen_principal'] ?>" 
-                                             class="me-2" style="width: 50px; height: 50px; object-fit: contain;"
-                                             alt="<?= htmlspecialchars($item['nombre']) ?>">
+                                        <?php
+                                            $rp = null;
+                                            if(!empty($item['imagen_principal'])) {
+                                                $val = $item['imagen_principal'];
+                                                if(strpos($val, 'data:') === 0) {
+                                                    $rp = $val;
+                                                } else {
+                                                    $rp = 'img/productos/' . $val;
+                                                }
+                                            }
+                                        ?>
+                                        <?php if(!empty($rp)): ?>
+                                            <img src="<?= $rp ?>" 
+                                                 class="me-2" style="width: 50px; height: 50px; object-fit: contain;"
+                                                 alt="<?= htmlspecialchars($item['nombre']) ?>">
+                                        <?php else: ?>
+                                            <div class="bg-light d-flex align-items-center justify-content-center me-2" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="bi bi-image fs-4 text-muted"></i>
+                                            </div>
+                                        <?php endif; ?>
                                         <div>
                                             <div class="fw-bold"><?= htmlspecialchars($item['nombre']) ?></div>
                                             <small class="text-muted">

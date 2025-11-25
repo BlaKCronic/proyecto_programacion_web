@@ -46,11 +46,23 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
         $id_producto = (int)$_POST['id_producto'];
         $producto = $appProducto->readOne($id_producto);
         
-        if($producto['imagen_principal']) {
+        if(!empty($producto['imagen_principal']) && strpos($producto['imagen_principal'], 'data:') !== 0) {
             $appProducto->eliminarImagen('productos', $producto['imagen_principal']);
         }
-        if($producto['imagenes_adicionales']) {
-            $appProducto->eliminarMultiplesImagenes('productos', $producto['imagenes_adicionales']);
+        if(!empty($producto['imagenes_adicionales'])) {
+            $raw = trim($producto['imagenes_adicionales']);
+            if(strlen($raw) > 0 && $raw[0] === '[') {
+                $arr = json_decode($raw, true);
+                if(is_array($arr)) {
+                    foreach($arr as $it) {
+                        if(!empty($it) && strpos($it, 'data:') !== 0) {
+                            $appProducto->eliminarImagen('productos', $it);
+                        }
+                    }
+                }
+            } else {
+                $appProducto->eliminarMultiplesImagenes('productos', $producto['imagenes_adicionales']);
+            }
         }
         
         $appProducto->delete($id_producto);
@@ -205,10 +217,15 @@ include_once "views/header.php";
                                 <tr>
                                     <td><?= $producto['id_producto'] ?></td>
                                     <td>
-                                        <?php if($producto['imagen_principal']): ?>
-                                            <img src="../img/productos/<?= $producto['imagen_principal'] ?>" 
-                                                 style="width: 50px; height: 50px; object-fit: cover;">
-                                        <?php else: ?>
+                                                <?php if(!empty($producto['imagen_principal'])): ?>
+                                                    <?php if(strpos($producto['imagen_principal'], 'data:') === 0): ?>
+                                                        <img src="<?= $producto['imagen_principal'] ?>" 
+                                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                                    <?php else: ?>
+                                                        <img src="../img/productos/<?= $producto['imagen_principal'] ?>" 
+                                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                                    <?php endif; ?>
+                                                <?php else: ?>
                                             <div class="bg-light d-flex align-items-center justify-content-center" 
                                                  style="width: 50px; height: 50px;">
                                                 <i class="bi bi-image"></i>

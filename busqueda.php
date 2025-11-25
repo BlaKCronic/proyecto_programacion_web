@@ -139,9 +139,25 @@ include_once "views/header.php";
                                     <a href="producto_detalle.php?id=<?= $producto['id_producto'] ?>" 
                                        class="text-decoration-none position-relative">
                                         <?php if($producto['imagen_principal']): ?>
-                                            <img src="img/productos/<?= $producto['imagen_principal'] ?>" 
-                                                 class="card-img-top p-3" alt="<?= htmlspecialchars($producto['nombre']) ?>"
-                                                 style="height: 200px; object-fit: contain;">
+                                            <?php
+                                                $rp = null;
+                                                $val = $producto['imagen_principal'];
+                                                if(strpos($val, 'data:') === 0) {
+                                                    $rp = $val;
+                                                } else {
+                                                    $rp = 'img/productos/' . $val;
+                                                }
+                                            ?>
+                                            <?php if(!empty($rp)): ?>
+                                                <img src="<?= $rp ?>" 
+                                                     class="card-img-top p-3" alt="<?= htmlspecialchars($producto['nombre']) ?>"
+                                                     style="height: 200px; object-fit: contain;">
+                                            <?php else: ?>
+                                                <div class="bg-light d-flex align-items-center justify-content-center" 
+                                                     style="height: 200px;">
+                                                    <i class="bi bi-image fs-1 text-muted"></i>
+                                                </div>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <div class="bg-light d-flex align-items-center justify-content-center" 
                                                  style="height: 200px;">
@@ -304,6 +320,7 @@ include_once "views/header.php";
 .card-title {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
