@@ -317,25 +317,6 @@ include_once "views/header.php";
 }
 </style>
 
-<script>
-document.getElementById('telefono').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-
-document.getElementById('codigo_postal').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-
-document.getElementById('formPassword').addEventListener('submit', function(e) {
-    const nueva = document.getElementById('password_nueva').value;
-    const confirmar = document.getElementById('password_confirmar').value;
-    
-    if(nueva !== confirmar) {
-        e.preventDefault();
-        alert('Las contraseñas no coinciden');
-        return false;
-    }
-});
-</script>
+<script src="js/usuario/perfil.js"></script>
 
 <?php include_once "views/footer.php"; ?>

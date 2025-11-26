@@ -488,4 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script src="js/usuario/login.js"></script>
+
 <?php include_once "views/footer.php"; ?>

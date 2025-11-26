@@ -91,12 +91,4 @@
     </div>
 </div>
 
-<script>
-document.getElementById('codigo_postal').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-
-document.getElementById('telefono').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-</script>
+<script src="../../js/checkout/direccion.js"></script>

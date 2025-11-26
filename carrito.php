@@ -264,16 +264,6 @@ include_once "views/header.php";
 }
 </style>
 
-<script>
-document.querySelectorAll('select[name^="cantidad"]').forEach(select => {
-    select.addEventListener('change', function() {
-        if(this.value == '0') {
-            if(confirm('¿Eliminar este producto del carrito?')) {
-                this.form.submit();
-            }
-        }
-    });
-});
-</script>
+<script src="js/comun/carrito-funciones.js"></script>
 
 <?php include_once "views/footer.php"; ?>

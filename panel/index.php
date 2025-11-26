@@ -490,143 +490,32 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script src="/proyecto/js/panel/admin.js"></script>
+
 <script>
-const ctxVentas = document.getElementById('ventasDiasChart').getContext('2d');
-new Chart(ctxVentas, {
-    type: 'line',
-    data: {
-        labels: <?= json_encode(array_column($ventas_por_dia, 'fecha')) ?>,
-        datasets: [{
-            label: 'Ventas',
-            data: <?= json_encode(array_column($ventas_por_dia, 'total')) ?>,
-            borderColor: 'rgb(78, 115, 223)',
-            backgroundColor: 'rgba(78, 115, 223, 0.1)',
-            tension: 0.3,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toLocaleString();
-                    }
-                }
-            }
-        }
-    }
-});
+const ventasDiasChart = document.getElementById('ventasDiasChart');
+if(ventasDiasChart) {
+    ventasDiasChart.dataset.fechas = '<?= json_encode(array_column($ventas_por_dia, 'fecha')) ?>';
+    ventasDiasChart.dataset.ventas = '<?= json_encode(array_column($ventas_por_dia, 'total')) ?>';
+}
 
-const ctxEstado = document.getElementById('pedidosEstadoChart').getContext('2d');
-new Chart(ctxEstado, {
-    type: 'doughnut',
-    data: {
-        labels: ['Pendiente', 'Procesando', 'Enviado', 'Entregado', 'Cancelado'],
-        datasets: [{
-            data: [
-                <?= $estados_pedidos['pendiente'] ?>,
-                <?= $estados_pedidos['procesando'] ?>,
-                <?= $estados_pedidos['enviado'] ?>,
-                <?= $estados_pedidos['entregado'] ?>,
-                <?= $estados_pedidos['cancelado'] ?>
-            ],
-            backgroundColor: [
-                'rgb(246, 194, 62)',
-                'rgb(54, 185, 204)',
-                'rgb(78, 115, 223)',
-                'rgb(28, 200, 138)',
-                'rgb(231, 74, 59)'
-            ]
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
+const pedidosEstadoChart = document.getElementById('pedidosEstadoChart');
+if(pedidosEstadoChart) {
+    pedidosEstadoChart.dataset.estados = '<?= json_encode([$estados_pedidos['pendiente'], $estados_pedidos['procesando'], $estados_pedidos['enviado'], $estados_pedidos['entregado'], $estados_pedidos['cancelado']]) ?>';
+}
 
-const ctxCategorias = document.getElementById('productosCategoria').getContext('2d');
-new Chart(ctxCategorias, {
-    type: 'bar',
-    data: {
-        labels: <?= json_encode(array_column($productos_por_categoria, 'nombre')) ?>,
-        datasets: [{
-            label: 'Productos',
-            data: <?= json_encode(array_column($productos_por_categoria, 'cantidad')) ?>,
-            backgroundColor: 'rgba(54, 185, 204, 0.8)'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                }
-            }
-        }
-    }
-});
+const productosCategoria = document.getElementById('productosCategoria');
+if(productosCategoria) {
+    productosCategoria.dataset.nombres = '<?= json_encode(array_column($productos_por_categoria, 'nombre')) ?>';
+    productosCategoria.dataset.cantidad = '<?= json_encode(array_column($productos_por_categoria, 'cantidad')) ?>';
+}
 
-const ctxVendedores = document.getElementById('topVendedoresChart').getContext('2d');
-new Chart(ctxVendedores, {
-    type: 'bar',
-    data: {
-        labels: [
-            <?php foreach($top_vendedores as $v): ?>
-                '<?= htmlspecialchars(substr($v['nombre_tienda'], 0, 20)) ?>',
-            <?php endforeach; ?>
-        ],
-        datasets: [{
-            label: 'Total Ventas',
-            data: [
-                <?php foreach($top_vendedores as $v): ?>
-                    <?= $v['total_ventas'] ?>,
-                <?php endforeach; ?>
-            ],
-            backgroundColor: 'rgba(28, 200, 138, 0.8)'
-        }]
-    },
-    options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            x: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                }
-            }
-        }
-    }
-});
+const topVendedoresChart = document.getElementById('topVendedoresChart');
+if(topVendedoresChart) {
+    topVendedoresChart.dataset.vendedores = '<?= json_encode(array_column($top_vendedores, 'nombre_tienda')) ?>';
+    topVendedoresChart.dataset.ventas = '<?= json_encode(array_column($top_vendedores, 'total_ventas')) ?>';
+}
 </script>
 
 <?php include_once "views/footer.php"; ?>

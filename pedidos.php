@@ -379,16 +379,6 @@ include_once "views/header.php";
 }
 </style>
 
-<script>
-function filtrarPedidos(estado) {
-    window.location.href = 'pedidos.php?estado=' + estado;
-}
-
-function cancelarPedido(id) {
-    if(confirm('¿Estás seguro de que deseas cancelar este pedido?')) {
-        alert('Funcionalidad de cancelar pendiente de implementar');
-    }
-}
-</script>
+<script src="js/usuario/pedidos.js"></script>
 
 <?php include_once "views/footer.php"; ?>

@@ -13,14 +13,13 @@ echo "PDO MySQL instalado: " . (extension_loaded('pdo_mysql') ? 'Sí' : 'No') . 
 echo "\n";
 
 $app = new Usuario();
-$email = "poncegonzalez849@gmail.com"; // Cambia esto por un email real de prueba
-$password = "123456"; // Cambia esto por una contraseña real de prueba
+$email = "poncegonzalez849@gmail.com";
+$password = "123456";
 
 echo "Iniciando prueba de login...\n";
 echo "Email: " . $email . "\n";
 echo "\nProbando login directo...\n";
 
-// Prueba de login
 $usuario = $app->login($email, $password);
 
 echo "Resultado de login: \n";

@@ -190,19 +190,7 @@ $pageTitle = 'Recuperar contraseña - Vendedor';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    <?php if($paso == 'restablecer'): ?>
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const password = document.getElementById('password').value;
-        const password_confirm = document.getElementById('password_confirm').value;
-        
-        if(password !== password_confirm) {
-            e.preventDefault();
-            alert('Las contraseñas no coinciden');
-            return false;
-        }
-    });
-    <?php endif; ?>
-    </script>
+    
+    <script src="../../js/vendedor/recuperar-password.js"></script>
 </body>
 </html>

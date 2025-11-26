@@ -244,25 +244,7 @@ $pageTitle = 'Registro de Vendedor - Amazon Lite';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    document.getElementById('telefono').addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
-
-    document.getElementById('rfc').addEventListener('input', function(e) {
-        this.value = this.value.toUpperCase();
-    });
-
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const password = document.getElementById('password').value;
-        const password_confirm = document.getElementById('password_confirm').value;
-        
-        if(password !== password_confirm) {
-            e.preventDefault();
-            alert('Las contraseñas no coinciden');
-            return false;
-        }
-    });
-    </script>
+    
+    <script src="../../js/vendedor/registro.js"></script>
 </body>
 </html>

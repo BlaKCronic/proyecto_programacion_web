@@ -216,7 +216,7 @@ include_once "views/header.php";
                         </div>
                         <div class="col-md-9 mt-3 mt-md-0">
                             <?php if(estaLogueado()): ?>
-                                <button class="btn btn-warning btn-lg w-100" id="btnAgregarCarrito">
+                                <button class="btn btn-warning btn-lg w-100" id="btnAgregarCarrito" data-producto-id="<?= $producto['id_producto'] ?>">
                                     <i class="bi bi-cart-plus"></i> Agregar al carrito
                                 </button>
                             <?php else: ?>
@@ -466,44 +466,6 @@ include_once "views/header.php";
 }
 </style>
 
-<script>
-function cambiarImagen(src) {
-    document.querySelector('#imagenPrincipal img').src = src;
-    
-    document.querySelectorAll('.miniatura-img').forEach(min => min.classList.remove('active'));
-    event.target.closest('.miniatura-img').classList.add('active');
-}
-
-<?php if(estaLogueado() && $producto['stock'] > 0): ?>
-document.getElementById('btnAgregarCarrito').addEventListener('click', function() {
-    const cantidad = document.getElementById('cantidad').value;
-    const productoId = <?= $producto['id_producto'] ?>;
-    
-    fetch('api/carrito_add.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            producto_id: productoId, 
-            cantidad: parseInt(cantidad) 
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.success) {
-            alert('Producto agregado al carrito');
-            location.reload();
-        } else {
-            alert(data.message || 'Error al agregar al carrito');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error al agregar al carrito');
-    });
-});
-<?php endif; ?>
-</script>
+<script src="js/comun/producto-detalle.js"></script>
 
 <?php include_once "views/footer.php"; ?>

@@ -281,4 +281,6 @@ document.getElementById('codigo_postal').addEventListener('input', function(e) {
 });
 </script>
 
+<script src="js/usuario/registro.js"></script>
+
 <?php include_once "views/footer.php"; ?>

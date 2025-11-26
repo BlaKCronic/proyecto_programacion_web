@@ -332,46 +332,7 @@ include_once "views/header.php";
 }
 </style>
 
-<script>
-<?php if(!empty($termino)): ?>
-document.getElementById('ordenSelect').addEventListener('change', function() {
-    const url = new URL(window.location.href);
-    url.searchParams.set('orden', this.value);
-    window.location.href = url.toString();
-});
-<?php endif; ?>
-
-<?php if(estaLogueado()): ?>
-document.querySelectorAll('.btn-add-cart').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const productoId = this.dataset.productoId;
-        agregarAlCarrito(productoId);
-    });
-});
-
-function agregarAlCarrito(productoId) {
-    fetch('api/carrito_add.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ producto_id: productoId, cantidad: 1 })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.success) {
-            alert('Producto agregado al carrito');
-            location.reload();
-        } else {
-            alert(data.message || 'Error al agregar al carrito');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error al agregar al carrito');
-    });
-}
-<?php endif; ?>
-</script>
+<script src="js/comun/busqueda.js"></script>
+<script src="js/comun/carrito-funciones.js"></script>
 
 <?php include_once "views/footer.php"; ?>
