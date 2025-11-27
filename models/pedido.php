@@ -148,6 +148,34 @@ class Pedido extends Sistema {
         $sth->execute();
         return $sth->rowCount();
     }
+    function cancelarPedido($id) {
+        $this->conect();
+        try {
+            $this->_BD->beginTransaction();
+
+            $sql = "UPDATE pedidos SET estado = :estado WHERE id_pedido = :id_pedido";
+            $sth = $this->_BD->prepare($sql);
+            $estado = 'cancelado';
+            $sth->bindParam(":estado", $estado, PDO::PARAM_STR);
+            $sth->bindParam(":id_pedido", $id, PDO::PARAM_INT);
+            $sth->execute();
+
+            $sql2 = "UPDATE detalle_pedidos SET estado_vendedor = :estado WHERE id_pedido = :id_pedido";
+            $sth2 = $this->_BD->prepare($sql2);
+            $sth2->bindParam(":estado", $estado, PDO::PARAM_STR);
+            $sth2->bindParam(":id_pedido", $id, PDO::PARAM_INT);
+            $sth2->execute();
+
+            $this->_BD->commit();
+            return true;
+        } catch(Exception $e) {
+            if($this->_BD->inTransaction()) {
+                $this->_BD->rollBack();
+            }
+            error_log('Error al cancelar pedido: ' . $e->getMessage());
+            return false;
+        }
+    }
 
     function read() {
         $this->conect();
