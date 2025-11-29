@@ -117,6 +117,26 @@ class Vendedor extends Sistema {
         return null;
     }
 
+    function incrementarVentas($id_vendedor, $monto) {
+        $this->conect();
+        $sql = "UPDATE vendedores SET total_ventas = COALESCE(total_ventas, 0) + :monto WHERE id_vendedor = :id_vendedor";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":monto", $monto, PDO::PARAM_STR);
+        $sth->bindParam(":id_vendedor", $id_vendedor, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->rowCount();
+    }
+
+    function decrementarVentas($id_vendedor, $monto) {
+        $this->conect();
+        $sql = "UPDATE vendedores SET total_ventas = GREATEST(COALESCE(total_ventas, 0) - :monto, 0) WHERE id_vendedor = :id_vendedor";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":monto", $monto, PDO::PARAM_STR);
+        $sth->bindParam(":id_vendedor", $id_vendedor, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->rowCount();
+    }
+
     function login($email, $password) {
         $this->conect();
         $sql = "SELECT * FROM vendedores WHERE email = :email AND activo = 1 AND estado_aprobacion = 'aprobado'";

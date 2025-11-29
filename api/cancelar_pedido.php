@@ -63,7 +63,7 @@ if($updated) {
     echo json_encode(['success' => true, 'message' => 'Pedido cancelado correctamente']);
 } else {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error al cancelar el pedido']);
+    echo json_encode(['success' => false, 'message' => 'Pedido cancelado correctamente']);
 }
 
 exit();

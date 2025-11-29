@@ -99,14 +99,14 @@ include_once "views/header.php";
                     <?php if(!empty($principalSrc) || !empty($imagenes_adicionales_arr)): ?>
                         <div class="d-flex justify-content-center gap-2">
                             <?php if(!empty($principalSrc)): ?>
-                                <div class="miniatura-img active" onclick="cambiarImagen('<?= $principalSrc ?>')">
+                                <div class="miniatura-img active" onclick="cambiarImagenDesdeMini(event, '<?= $principalSrc ?>')">
                                     <img src="<?= $principalSrc ?>" 
                                          class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;">
                                 </div>
                             <?php endif; ?>
 
                             <?php foreach($imagenes_adicionales_arr as $src): ?>
-                                <div class="miniatura-img" onclick="cambiarImagen('<?= $src ?>')">
+                                <div class="miniatura-img" onclick="cambiarImagenDesdeMini(event, '<?= $src ?>')">
                                     <img src="<?= $src ?>" 
                                          class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;">
                                 </div>

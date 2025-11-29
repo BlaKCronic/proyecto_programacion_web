@@ -177,6 +177,16 @@ class Producto extends Sistema {
         return $sth->rowCount();
     }
 
+    function increaseStock($id, $cantidad) {
+        $this->conect();
+        $sql = "UPDATE productos SET stock = COALESCE(stock,0) + :cantidad WHERE id_producto = :id_producto";
+        $sth = $this->_BD->prepare($sql);
+        $sth->bindParam(":cantidad", $cantidad, PDO::PARAM_INT);
+        $sth->bindParam(":id_producto", $id, PDO::PARAM_INT);
+        $sth->execute();
+        return $sth->rowCount();
+    }
+
     function delete($id) {
         if(is_numeric($id)) {
             $this->conect();

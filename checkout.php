@@ -4,6 +4,7 @@ require_once "models/carrito.php";
 require_once "models/pedido.php";
 require_once "models/usuario.php";
 require_once "models/producto.php";
+require_once "models/vendedor.php";
 require_once "models/Validator.php";
 
 if(!estaLogueado()) {
@@ -203,6 +204,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $appPedido->agregarDetalle($data_detalle);
                     
                     $appProducto->updateStock($item['id_producto'], $item['cantidad']);
+                    $appVendedorLocal = new Vendedor();
+                    $appVendedorLocal->incrementarVentas((int)$item['id_vendedor'], $subtotal_item);
                 }
                 
                 $appCarrito->vaciarCarrito($usuario_id);

@@ -150,8 +150,13 @@ class Pedido extends Sistema {
     }
     function cancelarPedido($id) {
         $this->conect();
+        require_once __DIR__ . "/vendedor.php";
+        require_once __DIR__ . "/producto.php";
+
         try {
             $this->_BD->beginTransaction();
+
+            $detalles = $this->readDetalle($id);
 
             $sql = "UPDATE pedidos SET estado = :estado WHERE id_pedido = :id_pedido";
             $sth = $this->_BD->prepare($sql);
@@ -165,6 +170,19 @@ class Pedido extends Sistema {
             $sth2->bindParam(":estado", $estado, PDO::PARAM_STR);
             $sth2->bindParam(":id_pedido", $id, PDO::PARAM_INT);
             $sth2->execute();
+
+            $appProducto = new Producto();
+            $appVendedor = new Vendedor();
+
+            foreach($detalles as $d) {
+                if(!empty($d['id_producto']) && !empty($d['cantidad'])) {
+                    $appProducto->increaseStock($d['id_producto'], (int)$d['cantidad']);
+                }
+
+                if(!empty($d['id_vendedor']) && isset($d['subtotal'])) {
+                    $appVendedor->decrementarVentas((int)$d['id_vendedor'], $d['subtotal']);
+                }
+            }
 
             $this->_BD->commit();
             return true;
@@ -193,20 +211,23 @@ class Pedido extends Sistema {
         
         if($id_vendedor) {
             $sql = "SELECT 
-                    COUNT(DISTINCT dp.id_pedido) as total_pedidos,
-                    SUM(dp.subtotal) as ventas_totales,
-                    SUM(dp.comision_plataforma) as comisiones_totales
-                    FROM detalle_pedidos dp
-                    INNER JOIN pedidos p ON dp.id_pedido = p.id_pedido
-                    WHERE dp.id_vendedor = :id_vendedor";
+                COUNT(DISTINCT dp.id_pedido) as total_pedidos,
+                SUM(dp.subtotal) as ventas_totales,
+                SUM(dp.comision_plataforma) as comisiones_totales
+                FROM detalle_pedidos dp
+                INNER JOIN pedidos p ON dp.id_pedido = p.id_pedido
+                WHERE dp.id_vendedor = :id_vendedor
+                AND p.estado != 'cancelado'
+                AND dp.estado_vendedor != 'cancelado'";
             $sth = $this->_BD->prepare($sql);
             $sth->bindParam(":id_vendedor", $id_vendedor, PDO::PARAM_INT);
         } else {
             $sql = "SELECT 
-                    COUNT(*) as total_pedidos,
-                    SUM(total) as ventas_totales,
-                    SUM(subtotal * 0.15) as comisiones_totales
-                    FROM pedidos";
+                COUNT(*) as total_pedidos,
+                SUM(total) as ventas_totales,
+                SUM(subtotal * 0.15) as comisiones_totales
+                FROM pedidos
+                WHERE estado != 'cancelado'";
             $sth = $this->_BD->prepare($sql);
         }
         

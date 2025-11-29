@@ -18,18 +18,22 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-    <!-- Utilidades -->
     <script src="../../js/utils/validaciones.js"></script>
     <script src="../../js/panel/admin.js"></script>
-    document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-        document.body.classList.toggle('sidebar-toggled');
-        document.querySelector('.sidebar').classList.toggle('toggled');
-    });
+    <script>
+    (function() {
+        var btn = document.getElementById('sidebarToggle');
+        var btnTop = document.getElementById('sidebarToggleTop');
+        var sidebar = document.querySelector('.sidebar');
 
-    document.getElementById('sidebarToggleTop')?.addEventListener('click', function() {
-        document.body.classList.toggle('sidebar-toggled');
-        document.querySelector('.sidebar').classList.toggle('toggled');
-    });
+        function toggleSidebar() {
+            document.body.classList.toggle('sidebar-toggled');
+            if(sidebar) sidebar.classList.toggle('toggled');
+        }
+
+        if(btn) btn.addEventListener('click', toggleSidebar);
+        if(btnTop) btnTop.addEventListener('click', toggleSidebar);
+    })();
     </script>
 </body>
 </html>

@@ -4,6 +4,7 @@ require_once "../config/paypal.php";
 require_once "../models/carrito.php";
 require_once "../models/pedido.php";
 require_once "../models/producto.php";
+require_once "../models/vendedor.php";
 
 use PayPal\Api\Payment;
 use PayPal\Api\PaymentExecution;
@@ -74,7 +75,7 @@ try {
             throw new Exception('Error al crear el pedido');
         }
         
-        foreach($items_carrito as $item) {
+            foreach($items_carrito as $item) {
             $precio_unitario = $item['precio_descuento'] ?? $item['precio'];
             $subtotal_item = $precio_unitario * $item['cantidad'];
             
@@ -90,6 +91,8 @@ try {
             $appPedido->agregarDetalle($data_detalle);
             
             $appProducto->updateStock($item['id_producto'], $item['cantidad']);
+                $appVendedorLocal = new Vendedor();
+                $appVendedorLocal->incrementarVentas((int)$item['id_vendedor'], $subtotal_item);
         }
 
         $transaction = $result->getTransactions()[0];
