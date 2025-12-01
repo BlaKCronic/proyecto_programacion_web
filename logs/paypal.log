@@ -74,3 +74,34 @@
 [29-11-2025 04:28:04] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
 [29-11-2025 05:28:45] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
 [29-11-2025 05:28:46] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[01-12-2025 13:07:42] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/oauth2/token
+[01-12-2025 13:07:44] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[01-12-2025 13:07:44] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:07:45] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 400
+[01-12-2025 13:07:45] PayPal\Core\PayPalHttpConnection : ERROR: Got Http response code 400 when accessing https://api.sandbox.paypal.com/v1/payments/payment. {"name":"VALIDATION_ERROR","details":[{"field":"transactions[0]","issue":"Item amount must add up to specified amount subtotal (or total if amount details not specified)"}],"message":"Invalid request - see details","information_link":"https://developer.paypal.com/docs/api/payments/v1/#error-VALIDATION_ERROR","debug_id":"c71a163d7a0c0"}
+[01-12-2025 13:08:35] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:08:36] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[01-12-2025 13:11:44] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:11:45] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 400
+[01-12-2025 13:11:45] PayPal\Core\PayPalHttpConnection : ERROR: Got Http response code 400 when accessing https://api.sandbox.paypal.com/v1/payments/payment. {"name":"VALIDATION_ERROR","details":[{"field":"transactions[0]","issue":"Item amount must add up to specified amount subtotal (or total if amount details not specified)"}],"message":"Invalid request - see details","information_link":"https://developer.paypal.com/docs/api/payments/v1/#error-VALIDATION_ERROR","debug_id":"d1d2e9fb6a35d"}
+[01-12-2025 13:12:52] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:12:52] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 400
+[01-12-2025 13:12:52] PayPal\Core\PayPalHttpConnection : ERROR: Got Http response code 400 when accessing https://api.sandbox.paypal.com/v1/payments/payment. {"name":"VALIDATION_ERROR","details":[{"field":"transactions[0]","issue":"Item amount must add up to specified amount subtotal (or total if amount details not specified)"}],"message":"Invalid request - see details","information_link":"https://developer.paypal.com/docs/api/payments/v1/#error-VALIDATION_ERROR","debug_id":"b92e364fa9516"}
+[01-12-2025 13:16:32] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:16:33] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[01-12-2025 13:18:42] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:18:43] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[01-12-2025 13:19:55] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:19:56] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[01-12-2025 13:51:02] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 13:51:03] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[01-12-2025 13:51:34] PayPal\Core\PayPalHttpConnection : INFO: GET https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEWZ2RY1T740589TA089010V
+[01-12-2025 13:51:35] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[01-12-2025 13:51:35] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEWZ2RY1T740589TA089010V/execute
+[01-12-2025 13:51:36] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[01-12-2025 15:30:53] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment
+[01-12-2025 15:30:54] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 201
+[01-12-2025 15:31:09] PayPal\Core\PayPalHttpConnection : INFO: GET https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEW3JLQ0HU7405199820784P
+[01-12-2025 15:31:09] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
+[01-12-2025 15:31:10] PayPal\Core\PayPalHttpConnection : INFO: POST https://api.sandbox.paypal.com/v1/payments/payment/PAYID-NEW3JLQ0HU7405199820784P/execute
+[01-12-2025 15:31:10] PayPal\Core\PayPalHttpConnection : INFO: Response Status 	: 200
